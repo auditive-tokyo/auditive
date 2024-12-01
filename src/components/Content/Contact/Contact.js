@@ -5,7 +5,7 @@ function Contact() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
-    const apiUrl = process.env.REACT_APP_API_URL;
+    const apiUrl = process.env.REACT_APP_CONTACT_FORM_API_URL;
 
     const handleSubmit = async (e) => {
         e.preventDefault();

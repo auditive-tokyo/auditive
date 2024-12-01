@@ -22,7 +22,7 @@ jobs:
 
       - name: Build
         env:
-          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          REACT_APP_CONTACT_FORM_API_URL: https://${{ secrets.CONTACT_FORM_API_GATEWAY_ID }}.execute-api.${{ secrets.AWS_REGION }}.amazonaws.com/auditive/contact
         run: npm run build
 
       - name: Deploy
@@ -31,3 +31,39 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build
           cname: auditive.tokyo
+
+  deploy-lambda:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout contact form backend
+        uses: actions/checkout@v3
+        with:
+          repository: tokyoundergroundbeatzmassive/contact_form_backend
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.12'
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      - name: SAM Build and Deploy
+        run: |
+          sam build
+          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset \
+            --stack-name auditive-contact-form \
+            --parameter-overrides \
+              ApiId=${{ secrets.CONTACT_FORM_API_GATEWAY_ID }} \
+              SENDER_EMAIL=${{ secrets.CONTACT_FORM_EMAIL }} \
+              RECEIVER_EMAIL=${{ secrets.CONTACT_FORM_EMAIL }} \
+              APP_PASSWORD=${{ secrets.APP_PASSWORD }}
