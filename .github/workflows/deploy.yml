@@ -63,6 +63,7 @@ jobs:
           sam deploy --no-confirm-changeset --no-fail-on-empty-changeset \
             --stack-name auditive-contact-form \
             --resolve-s3 \
+            --capabilities CAPABILITY_IAM \
             --parameter-overrides \
             "ParameterKey=ApiId,ParameterValue=${CONTACT_FORM_API_GATEWAY_ID} \
              ParameterKey=SenderEmail,ParameterValue=${CONTACT_FORM_EMAIL} \
