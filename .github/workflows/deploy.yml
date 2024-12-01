@@ -64,10 +64,10 @@ jobs:
             --stack-name auditive-contact-form \
             --resolve-s3 \
             --parameter-overrides \
-              ApiId=${CONTACT_FORM_API_GATEWAY_ID} \
-              SENDER_EMAIL=${CONTACT_FORM_EMAIL} \
-              RECEIVER_EMAIL=${CONTACT_FORM_EMAIL} \
-              APP_PASSWORD=${APP_PASSWORD}
+              ParameterKey=ApiId,ParameterValue=${CONTACT_FORM_API_GATEWAY_ID} \
+              ParameterKey=SENDER_EMAIL,ParameterValue=${CONTACT_FORM_EMAIL} \
+              ParameterKey=RECEIVER_EMAIL,ParameterValue=${CONTACT_FORM_EMAIL} \
+              ParameterKey=APP_PASSWORD,ParameterValue=${APP_PASSWORD}
         env:
           CONTACT_FORM_API_GATEWAY_ID: ${{ secrets.CONTACT_FORM_API_GATEWAY_ID }}
           CONTACT_FORM_EMAIL: ${{ secrets.CONTACT_FORM_EMAIL }}
