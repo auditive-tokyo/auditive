@@ -7,7 +7,7 @@ function NewTunesContent() {
             <div className="description">
                 <p className="bold-text">AUDITIVE is Tokyo based Japanese Drum&Bass Producer.</p>
                 <p className="normal-text">Focusing on mainly dark, minimal side of Drum&Bass.</p>
-                <p className="normal-text">Developing some VST plugins as one of my hobby.</p>
+                <p className="normal-text">Developing some VST plugins as one of my hobby too.</p>
             </div>
             <iframe
                 title="AUDITIVE - New Tunes (Unreleased) on SoundCloud"
