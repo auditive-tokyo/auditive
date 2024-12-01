@@ -74,3 +74,33 @@ button:hover {
         padding: 15px;
     }
 }
+
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, .3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-left: 10px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    margin: 0 auto;
+}

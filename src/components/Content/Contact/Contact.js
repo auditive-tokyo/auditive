@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
-import './Contact.css';
-
 function Contact() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(false);  // 追加
     const apiUrl = process.env.REACT_APP_CONTACT_FORM_API_URL;
 
     const handleSubmit = async (e) => {
@@ -13,6 +11,9 @@ function Contact() {
             alert('API URL is not set. Please check your configuration.');
             return;
         }
+
+        setIsLoading(true);  // 送信開始時にローディング開始
+
         try {
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -32,6 +33,8 @@ function Contact() {
         } catch (error) {
             console.error('Error:', error);
             alert('An error occurred. Please try again later.');
+        } finally {
+            setIsLoading(false);  // 処理完了時にローディング終了
         }
     };
 
@@ -48,6 +51,7 @@ function Contact() {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
+                        disabled={isLoading}  // 送信中は入力を無効化
                     />
                 </div>
                 <div>
@@ -58,6 +62,7 @@ function Contact() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        disabled={isLoading}  // 送信中は入力を無効化
                     />
                 </div>
                 <div>
@@ -67,12 +72,14 @@ function Contact() {
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         required
+                        disabled={isLoading}  // 送信中は入力を無効化
                     ></textarea>
                 </div>
-                <button type="submit">Send</button>
+                <button type="submit" disabled={isLoading}>
+                    {isLoading ? 'Sending...' : 'Send'}  {/* 送信中はテキストを変更 */}
+                    {isLoading && <span className="spinner" />}  {/* ローディング中はスピナーを表示 */}
+                </button>
             </form>
         </div>
     );
 }
-
-export default Contact;
