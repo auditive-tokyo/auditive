@@ -1,3 +1,6 @@
+import React, { useState } from 'react';
+import './Contact.css';
+
 function Contact() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -83,3 +86,5 @@ function Contact() {
         </div>
     );
 }
+
+export default Contact;
