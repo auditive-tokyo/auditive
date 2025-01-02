@@ -68,7 +68,7 @@ jobs:
             "ParameterKey=ApiId,ParameterValue=${CONTACT_FORM_API_GATEWAY_ID} \
              ParameterKey=SenderEmail,ParameterValue=${CONTACT_FORM_EMAIL} \
              ParameterKey=ReceiverEmail,ParameterValue=${CONTACT_FORM_EMAIL} \
-             ParameterKey=AppPassword,ParameterValue=${APP_PASSWORD}"
+             ParameterKey=AppPassword,ParameterValue=${APP_PASSWORD} \
              ParameterKey=RepositoryName,ParameterValue=${GITHUB_REPOSITORY#*/}"
         env:
           CONTACT_FORM_API_GATEWAY_ID: ${{ secrets.CONTACT_FORM_API_GATEWAY_ID }}
