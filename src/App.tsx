@@ -5,17 +5,21 @@ import Header from './components/Header';
 import MainContent from './components/MainContent';
 import Menu from './components/Menu/Menu';
 
-function App() {
-  const [activeMenu, setActiveMenu] = useState(() => {
+type MenuOption = 'new-tunes' | 'past-releases' | 'contact';
+
+const App: React.FC = () => {
+  const [activeMenu, setActiveMenu] = useState<MenuOption>(() => {
     const hash = window.location.hash.slice(1);
-    return ['new-tunes', 'past-releases', 'contact'].includes(hash) ? hash : 'new-tunes';
+    const validOptions: MenuOption[] = ['new-tunes', 'past-releases', 'contact'];
+    return validOptions.includes(hash as MenuOption) ? (hash as MenuOption) : 'new-tunes';
   });
 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      if (['new-tunes', 'past-releases', 'contact'].includes(hash)) {
-        setActiveMenu(hash);
+      const validOptions: MenuOption[] = ['new-tunes', 'past-releases', 'contact'];
+      if (validOptions.includes(hash as MenuOption)) {
+        setActiveMenu(hash as MenuOption);
       }
     };
 
@@ -23,7 +27,7 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const handleMenuClick = (menu) => {
+  const handleMenuClick = (menu: MenuOption) => {
     setActiveMenu(menu);
     window.location.hash = menu;
   };
@@ -36,6 +40,6 @@ function App() {
       <Footer />
     </div>
   );
-}
+};
 
 export default App;
