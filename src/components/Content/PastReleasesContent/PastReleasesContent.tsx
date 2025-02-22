@@ -1,15 +1,15 @@
 import React from 'react';
-import './PastReleasesContent.css';
+import '../../../styles/contentStyles.css';
 
 const PastReleasesContent: React.FC = () => {
   return (
-    <div className="past-releases-content">
-      <div className="description">
-        <p className="bold-text">Releases from:</p>
-        <ul>
-          <li>Deafmuted Records</li>
-          <li>Onset Audio</li>
-          <li>Nyctophilia Recordings</li>
+    <div className="w-full max-w-[700px]">
+      <div className="mb-4 content-base">
+        <p className="font-bold">Releases from:</p>
+        <ul className="list-none p-0 text-left text-[21px]">
+          <li className="my-1">Deafmuted Records</li>
+          <li className="my-1">Onset Audio</li>
+          <li className="my-1">Nyctophilia Recordings</li>
         </ul>
       </div>
       <iframe

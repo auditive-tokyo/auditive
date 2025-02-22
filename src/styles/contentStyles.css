@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.content-base {
+  @apply text-[24px] text-left;
+}
+
+.description-text {
+  @apply text-base text-[#cccccc] mb-5 text-left leading-6;
+  font-family: 'Arial, sans-serif';
+}

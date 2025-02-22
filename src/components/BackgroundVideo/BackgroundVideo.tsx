@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 
 import React, { useEffect, useRef } from 'react';
-import './BackgroundVideo.css';
 
 const BackgroundVideo: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -17,9 +16,16 @@ const BackgroundVideo: React.FC = () => {
   }, []);
 
   return (
-    <div className="video-background">
-      <video ref={videoRef} autoPlay loop muted playsInline>
-      <source src={import.meta.env.BASE_URL + "videos/bg_noise.mp4"} type="video/mp4" />
+    <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-[-1]">
+      <video
+        ref={videoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="w-full h-full object-cover"
+      >
+        <source src={import.meta.env.BASE_URL + "videos/bg_noise.mp4"} type="video/mp4" />
         お使いのブラウザはビデオタグをサポートしていません。
       </video>
     </div>

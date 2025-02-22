@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import './Contact.css';
 
 const Contact: React.FC = () => {
   const [name, setName] = useState<string>('');
@@ -43,12 +42,16 @@ const Contact: React.FC = () => {
   };
 
   return (
-    <div className="contact-content">
-      <h2>Contact</h2>
-      <p className="contact-description">Contact us for collab, booking, or just to say hi!</p>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="name">Name:</label>
+    <div className="max-w-[500px] mx-auto p-5 bg-gray-100 rounded-lg shadow sm:max-w-[95%] sm:p-4">
+      <h2 className="text-center text-gray-800 mb-5">Contact</h2>
+      <p className="text-center text-gray-600 mb-5 text-base">
+        Contact us for collab, booking, or just to say hi!
+      </p>
+      <form onSubmit={handleSubmit} className="flex flex-col">
+        <div className="mb-4">
+          <label htmlFor="name" className="block mb-1 text-gray-700 font-bold">
+            Name:
+          </label>
           <input
             type="text"
             id="name"
@@ -56,10 +59,13 @@ const Contact: React.FC = () => {
             onChange={(e) => setName(e.target.value)}
             required
             disabled={isLoading}
+            className="w-full p-2.5 border border-gray-300 rounded text-base"
           />
         </div>
-        <div>
-          <label htmlFor="email">Email:</label>
+        <div className="mb-4">
+          <label htmlFor="email" className="block mb-1 text-gray-700 font-bold">
+            Email:
+          </label>
           <input
             type="email"
             id="email"
@@ -67,21 +73,31 @@ const Contact: React.FC = () => {
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={isLoading}
+            className="w-full p-2.5 border border-gray-300 rounded text-base"
           />
         </div>
-        <div>
-          <label htmlFor="message">Message:</label>
+        <div className="mb-4">
+          <label htmlFor="message" className="block mb-1 text-gray-700 font-bold">
+            Message:
+          </label>
           <textarea
             id="message"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             required
             disabled={isLoading}
+            className="w-full p-2.5 border border-gray-300 rounded text-base h-[150px] resize-y"
           ></textarea>
         </div>
-        <button type="submit" disabled={isLoading}>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="flex items-center justify-center min-w-[120px] mx-auto py-3 px-5 bg-blue-600 text-white rounded-md text-base transition-colors duration-300 ease-in-out hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
           {isLoading ? 'Sending...' : 'Send'}
-          {isLoading && <span className="spinner" />}
+          {isLoading && (
+            <span className="w-5 h-5 border-2 border-white border-t-2 border-t-transparent animate-spin ml-2"></span>
+          )}
         </button>
       </form>
     </div>
