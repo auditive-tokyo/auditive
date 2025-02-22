@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './App.css';
+// import './App.css';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
@@ -33,11 +33,11 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="App">
-      <Header />
+    <div className="app-layout">
+      <Header className="header-footer-common" />
       <Menu activeMenu={activeMenu} onMenuClick={handleMenuClick} />
       <MainContent activeMenu={activeMenu} />
-      <Footer />
+      <Footer className="header-footer-common" />
     </div>
   );
 };

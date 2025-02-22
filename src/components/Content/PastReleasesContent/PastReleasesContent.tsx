@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../../styles/contentStyles.css';
+import '../styles/contentStyles.css';
 
 const PastReleasesContent: React.FC = () => {
   return (

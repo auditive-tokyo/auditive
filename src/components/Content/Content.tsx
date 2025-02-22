@@ -2,7 +2,7 @@ import React from 'react';
 import Contact from './Contact/Contact';
 import NewTunesContent from './NewTunesContent/NewTunesContent';
 import PastReleasesContent from './PastReleasesContent/PastReleasesContent';
-import '../../styles/contentStyles.css';
+import './styles/contentStyles.css';
 
 export type MenuOption = 'new-tunes' | 'past-releases' | 'contact';
 

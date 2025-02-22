@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#121212] text-white font-[Arial,sans-serif] m-0 p-0;
+  }
+}
+
+@layer components {
+  .app-layout {
+    @apply text-center;
+  }
+
+  .header-footer-common {
+    @apply bg-[#1f1f1f] p-5;
+  }
+}
