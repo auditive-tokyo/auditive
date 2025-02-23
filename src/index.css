@@ -19,7 +19,7 @@
 
   /* テキストスタイルの定義 */
   .text-menu {
-    @apply text-base font-light tracking-wider;
+    @apply text-sm font-light tracking-wider;
   }
 
   .text-heading {

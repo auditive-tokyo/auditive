@@ -60,21 +60,21 @@ const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
         }`} />
       </button>
 
-      {/* メニュー本体 - 幅を制限 */}
-      <div className={`fixed top-0 left-0 h-full w-[500px] max-w-[700px] bg-black/50 backdrop-blur-sm transition-transform duration-300 ${
+      {/* メニュー本体 */}
+      <div className={`fixed top-0 left-0 h-full w-[300px] max-w-[500px] bg-black/50 backdrop-blur-sm transition-transform duration-300 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        {/* 閉じるボタン - 位置を上に調整 */}
+        {/* 閉じるボタン - 線を太く */}
         <button
           onClick={() => setIsOpen(false)}
-          className="absolute top-[100px] right-6 p-2 hover:opacity-70 transition-opacity"
+          className="absolute top-6 right-6 p-2 hover:opacity-70 transition-opacity"
           aria-label="Close menu"
         >
-          <div className="w-6 h-[3px] bg-white rounded-full rotate-45 absolute"></div>
-          <div className="w-6 h-[3px] bg-white rounded-full -rotate-45 absolute"></div>
+          <div className="w-8 h-[4px] bg-gray-400 rounded-full rotate-45 absolute"></div>
+          <div className="w-8 h-[4px] bg-gray-400 rounded-full -rotate-45 absolute"></div>
         </button>
 
-        <ul className="h-full flex flex-col items-start pl-12 gap-2 pt-[120px]"> {/* gap-8 から gap-4 に変更 */}
+        <ul className="h-full flex flex-col items-start pl-12 gap-4 pt-[120px]">
           {menuItems.map((item, index) => (
             <AnimatedLi
               key={item.name}
