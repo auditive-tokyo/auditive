@@ -16,4 +16,17 @@
   .header-footer-common {
     @apply bg-[#1f1f1f] p-5;
   }
+
+  /* テキストスタイルの定義 */
+  .text-menu {
+    @apply text-base font-light tracking-wider;
+  }
+
+  .text-heading {
+    @apply text-2xl font-bold tracking-wide;
+  }
+
+  .text-content {
+    @apply text-base font-normal;
+  }
 }

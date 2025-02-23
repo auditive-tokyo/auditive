@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { animated, useSprings } from 'react-spring';
-import './Menu.css';
 
 export type MenuOption = 'new-tunes' | 'past-releases' | 'contact';
 
@@ -14,73 +13,91 @@ interface MenuProps {
   onMenuClick: (menu: MenuOption) => void;
 }
 
-// 型キャスト: Reactの<li>のプロパティを含むコンポーネントとして扱う
 const AnimatedLi = animated.li as unknown as React.FC<
   React.LiHTMLAttributes<HTMLLIElement> & { style?: any }
 >;
 
 const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
-  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const [isOpen, setIsOpen] = useState(false);
 
   const menuItems: MenuItem[] = [
-    { name: 'new-tunes', label: 'New Tunes' },
-    { name: 'past-releases', label: 'Past Releases' },
-    { name: 'contact', label: 'Contact' },
+    { name: 'new-tunes', label: 'NEW TUNES' },
+    { name: 'past-releases', label: 'PAST RELEASES' },
+    { name: 'contact', label: 'CONTACT' },
   ];
-
-  const getMenuItemSize = (menuItem: MenuOption) => {
-    if (menuItem === activeMenu)
-      return { fontSize: isMobile ? '18px' : '24px', color: 'rgb(255, 0, 225)' };
-    if (
-      (activeMenu === 'new-tunes' && menuItem === 'past-releases') ||
-      (activeMenu === 'past-releases' &&
-        (menuItem === 'new-tunes' || menuItem === 'contact')) ||
-      (activeMenu === 'contact' && menuItem === 'past-releases')
-    )
-      return { fontSize: isMobile ? '16px' : '18px', color: 'rgb(0, 255, 0)' };
-    return { fontSize: isMobile ? '14px' : '14px', color: '#0055ff' };
-  };
 
   const springs = useSprings(
     menuItems.length,
-    menuItems.map((item) => {
-      const { fontSize, color } = getMenuItemSize(item.name);
-      return {
-        transform:
-          isMobile || activeMenu !== item.name ? 'scale(1)' : 'scale(1.1)',
-        fontSize,
-        color,
-        config: { tension: 300, friction: 10 },
-      };
-    })
+    menuItems.map((item) => ({
+      transform: activeMenu === item.name ? 'scale(1.05)' : 'scale(1)',
+      opacity: isOpen ? 1 : 0,
+      y: isOpen ? 0 : -20,
+      color: activeMenu === item.name ? 'rgb(34, 211, 238)' : 'rgba(255, 255, 255, 0.9)',
+      config: { tension: 300, friction: 20 },
+    }))
   );
 
+  const handleMenuClick = (menu: MenuOption) => {
+    onMenuClick(menu);
+    setIsOpen(false);
+  };
+
   return (
-    <nav className={`menu-container ${isMobile ? 'mobile' : ''}`}>
-      <ul>
-        {menuItems.map((item, index) => {
-          const isActive = activeMenu === item.name;
-          return (
+    <nav className="fixed top-[100px] left-4 z-50">
+      {/* ハンバーガーボタン - サイズを大きく */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-3 bg-black/30 backdrop-blur-sm rounded-md" // p-2 から p-3 に変更
+      >
+        <div className={`w-8 h-[3px] bg-white rounded-full transition-all duration-300 ${  // w-6 から w-8 に変更
+          isOpen ? 'rotate-45 translate-y-[10px]' : ''  // 8px から 10px に調整
+        }`} />
+        <div className={`w-8 h-[3px] bg-white rounded-full my-[7px] transition-opacity ${  // w-6 から w-8 に、my-[6px] から my-[7px] に変更
+          isOpen ? 'opacity-0' : 'opacity-100'
+        }`} />
+        <div className={`w-8 h-[3px] bg-white rounded-full transition-all duration-300 ${  // w-6 から w-8 に変更
+          isOpen ? '-rotate-45 -translate-y-[10px]' : ''  // -8px から -10px に調整
+        }`} />
+      </button>
+
+      {/* メニュー本体 - 幅を制限 */}
+      <div className={`fixed top-0 left-0 h-full w-[500px] max-w-[700px] bg-black/50 backdrop-blur-sm transition-transform duration-300 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        {/* 閉じるボタン - 位置を上に調整 */}
+        <button
+          onClick={() => setIsOpen(false)}
+          className="absolute top-[100px] right-6 p-2 hover:opacity-70 transition-opacity"
+          aria-label="Close menu"
+        >
+          <div className="w-6 h-[3px] bg-white rounded-full rotate-45 absolute"></div>
+          <div className="w-6 h-[3px] bg-white rounded-full -rotate-45 absolute"></div>
+        </button>
+
+        <ul className="h-full flex flex-col items-start pl-12 gap-2 pt-[120px]"> {/* gap-8 から gap-4 に変更 */}
+          {menuItems.map((item, index) => (
             <AnimatedLi
               key={item.name}
-              className={`menu-item ${isActive ? 'active' : ''}`}
-              onClick={() => onMenuClick(item.name)}
-              style={springs[index] as any}
+              onClick={() => handleMenuClick(item.name)}
+              className={`
+                relative px-4 py-2 
+                text-menu
+                cursor-pointer
+                before:absolute before:left-0 before:bottom-0
+                before:w-full before:h-[1px]
+                before:bg-cyan-400
+                before:transform before:scale-x-0
+                before:transition-transform before:duration-300
+                hover:before:scale-x-100
+                ${activeMenu === item.name ? 'before:scale-x-100' : ''}
+              `}
+              style={springs[index]}
             >
               {item.label}
             </AnimatedLi>
-          );
-        })}
-      </ul>
+          ))}
+        </ul>
+      </div>
     </nav>
   );
 };
