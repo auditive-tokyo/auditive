@@ -3,7 +3,7 @@ import '../styles/contentStyles.css';
 
 const PastReleasesContent: React.FC = () => {
   return (
-    <div className="w-full max-w-[700px]">
+    <div className="w-full">
       <div className="mb-4 content-base">
         <p className="font-bold">Releases from:</p>
         <ul className="list-none p-0 text-left text-[21px]">

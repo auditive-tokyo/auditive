@@ -42,7 +42,7 @@ const Contact: React.FC = () => {
   };
 
   return (
-    <div className="max-w-[500px] mx-auto p-5 bg-gray-100 rounded-lg shadow sm:max-w-[95%] sm:p-4">
+    <div className="p-5 bg-gray-100 rounded-lg shadow sm:p-4">
       <h2 className="text-center text-gray-800 mb-5">Contact</h2>
       <p className="text-center text-gray-600 mb-5 text-base">
         Contact us for collab, booking, or just to say hi!

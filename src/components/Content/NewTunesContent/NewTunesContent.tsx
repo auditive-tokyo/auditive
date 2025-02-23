@@ -3,7 +3,7 @@ import '../styles/contentStyles.css';
 
 const NewTunesContent: React.FC = () => {
   return (
-    <div className="w-full max-w-[700px]">
+    <div className="w-full">
       <div className="mb-4 content-base">
         <p className="font-bold">
           AUDITIVE is Tokyo based Japanese Drum&Bass Producer.
