@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { animated, useSprings } from 'react-spring';
 
-export type MenuOption = 'new-tunes' | 'past-releases' | 'contact';
+export type MenuOption = 'new-tunes' | 'past-releases' | 'contact' | 'create';
 
 interface MenuItem {
   name: MenuOption;
@@ -24,6 +24,7 @@ const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
     { name: 'new-tunes', label: 'NEW TUNES' },
     { name: 'past-releases', label: 'PAST RELEASES' },
     { name: 'contact', label: 'CONTACT' },
+    { name: 'create', label: 'CREATE PAGE' },  // 追加
   ];
 
   const springs = useSprings(

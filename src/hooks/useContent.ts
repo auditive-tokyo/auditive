@@ -5,8 +5,13 @@ import { Content } from '../API'; // 型定義が自動生成される
 const client = generateClient();
 
 export const useContent = () => {
-  const createContent = async (title: string, content: string) => {
+  const createContent = async (
+    title: string, 
+    content: string, 
+    status: 'draft' | 'published' = 'draft'
+  ) => {
     try {
+      const now = new Date().toISOString(); // ISO 8601 UTC format: YYYY-MM-DDTHH:mm:ss.sssZ
       const result = await client.graphql({
         query: `
           mutation CreateContent($input: CreateContentInput!) {
@@ -16,15 +21,15 @@ export const useContent = () => {
               content
               status
               createdAt
-              updatedAt
             }
           }
         `,
         variables: {
           input: {
-            title: 'test title',
+            title,
             content,
-            status: 'PUBLISHED'
+            status: status.toUpperCase(),
+            createdAt: now
           }
         }
       });
@@ -35,7 +40,7 @@ export const useContent = () => {
     }
   };
 
-  const updateContent = async (id: string, content: string) => {
+  const updateContent = async (id: string, content: string, status: string) => {
     try {
       const result = await client.graphql({
         query: `
@@ -53,14 +58,13 @@ export const useContent = () => {
           input: {
             id,
             content,
-            title: 'test title'  // titleは必須フィールドなので追加
+            status,
+            title: 'test title'
           }
         }
       });
-      console.log('Update result:', result); // 成功時のレスポンスを確認
       return result.data.updateContent as Content;
     } catch (error) {
-      // エラーの詳細を表示
       console.error('Detailed error:', JSON.stringify(error, null, 2));
       throw error;
     }
@@ -90,35 +94,9 @@ export const useContent = () => {
     }
   };
 
-  const listContents = async () => {
-    try {
-      const result = await client.graphql({
-        query: `
-          query ListContents {
-            listContents {
-              items {
-                id
-                title
-                content
-                status
-                createdAt
-                updatedAt
-              }
-            }
-          }
-        `
-      });
-      return result.data.listContents.items as Content[];
-    } catch (error) {
-      console.error('Error listing contents:', error);
-      throw error;
-    }
-  };
-
   return {
     createContent,
     updateContent,
-    getContent,
-    listContents
+    getContent
   };
 };
