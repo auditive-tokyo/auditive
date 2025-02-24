@@ -1,8 +1,7 @@
 import React from 'react';
 import BackgroundVideo from './BackgroundVideo/BackgroundVideo';
 import Content from './Content/Content';
-
-type MenuOption = 'new-tunes' | 'past-releases' | 'contact';
+import { MenuOption } from './Menu/Menu'; 
 
 interface MainContentProps {
   activeMenu: MenuOption;
