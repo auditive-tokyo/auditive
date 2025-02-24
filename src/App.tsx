@@ -10,7 +10,7 @@ import Login from './components/Content/Login/Login';
 const App: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<MenuOption>(() => {
     const hash = window.location.hash.slice(1);
-    return VALID_MENU_OPTIONS.includes(hash as MenuOption) ? (hash as MenuOption) : 'new-tunes';
+    return VALID_MENU_OPTIONS.includes(hash as MenuOption) ? (hash as MenuOption) : 'contact';
   });
 
   useEffect(() => {

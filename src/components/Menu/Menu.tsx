@@ -137,7 +137,7 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
                 onClick={() => {
                   logout();
                   if (activeMenu === 'create') {
-                    onMenuClick('new-tunes');
+                    onMenuClick('contact');  // new-tunes から contact に変更
                   }
                 }}
                 className="px-4 py-2 text-red-400 hover:text-red-300 transition-colors"

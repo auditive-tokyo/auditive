@@ -18,10 +18,6 @@ const Content: React.FC<ContentProps> = ({ activeMenu }) => {
     }
 
     switch (activeMenu) {
-      case 'new-tunes':
-        return <NewTunesContent />;
-      case 'past-releases':
-        return <PastReleasesContent />;
       case 'contact':
         return <Contact />;
       case 'create':
