@@ -11,6 +11,11 @@ interface ContentProps {
 
 const Content: React.FC<ContentProps> = ({ activeMenu }) => {
   const renderContent = () => {
+    // activeMenuが空の場合はローディング表示
+    if (!activeMenu) {
+      return <div>Loading...</div>;
+    }
+
     const staticMenus = VALID_MENU_OPTIONS.filter(menu => menu !== 'login');
     
     if (!staticMenus.includes(activeMenu)) {
