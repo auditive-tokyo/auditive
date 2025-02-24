@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { animated, useSprings } from 'react-spring';
+import { useAuth } from '../../Auth/AuthContext';
 
-export type MenuOption = 'new-tunes' | 'past-releases' | 'contact' | 'create';
+export type MenuOption = 'new-tunes' | 'past-releases' | 'contact' | 'create' | 'login';
+
+export const VALID_MENU_OPTIONS: MenuOption[] = ['new-tunes', 'past-releases', 'contact', 'create', 'login'];
 
 interface MenuItem {
   name: MenuOption;
@@ -17,14 +20,16 @@ const AnimatedLi = animated.li as unknown as React.FC<
   React.LiHTMLAttributes<HTMLLIElement> & { style?: any }
 >;
 
-const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
+export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { isAuthenticated, logout } = useAuth();  // 追加
 
   const menuItems: MenuItem[] = [
     { name: 'new-tunes', label: 'NEW TUNES' },
     { name: 'past-releases', label: 'PAST RELEASES' },
     { name: 'contact', label: 'CONTACT' },
-    { name: 'create', label: 'CREATE PAGE' },  // 追加
+    // Create Pageはログイン時のみ表示
+    ...(isAuthenticated ? [{ name: 'create', label: 'CREATE PAGE' }] : []),
   ];
 
   const springs = useSprings(
@@ -97,6 +102,29 @@ const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
               {item.label}
             </AnimatedLi>
           ))}
+          {/* ログインボタンの追加 */}
+          <li className="mt-8">
+            {isAuthenticated ? (
+              <button
+                onClick={() => {
+                  logout();
+                  if (activeMenu === 'create') {
+                    onMenuClick('new-tunes');
+                  }
+                }}
+                className="px-4 py-2 text-red-400 hover:text-red-300 transition-colors"
+              >
+                LOGOUT
+              </button>
+            ) : (
+              <button
+                onClick={() => onMenuClick('login')}
+                className="px-4 py-2 text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                LOGIN
+              </button>
+            )}
+          </li>
         </ul>
       </div>
     </nav>

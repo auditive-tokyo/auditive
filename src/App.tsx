@@ -1,24 +1,22 @@
 import React, { useState, useEffect } from 'react';
-// import './App.css';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
-import Menu from './components/Menu/Menu';
-
-type MenuOption = 'new-tunes' | 'past-releases' | 'contact';
+import { Menu, MenuOption, VALID_MENU_OPTIONS } from './components/Menu/Menu';
+import { AuthProvider } from './auth/AuthContext';
+import PrivateRoute from './auth/PrivateRoute';
+import Login from './components/Content/Login/Login';
 
 const App: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<MenuOption>(() => {
     const hash = window.location.hash.slice(1);
-    const validOptions: MenuOption[] = ['new-tunes', 'past-releases', 'contact'];
-    return validOptions.includes(hash as MenuOption) ? (hash as MenuOption) : 'new-tunes';
+    return VALID_MENU_OPTIONS.includes(hash as MenuOption) ? (hash as MenuOption) : 'new-tunes';
   });
 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      const validOptions: MenuOption[] = ['new-tunes', 'past-releases', 'contact'];
-      if (validOptions.includes(hash as MenuOption)) {
+      if (VALID_MENU_OPTIONS.includes(hash as MenuOption)) {
         setActiveMenu(hash as MenuOption);
       }
     };
@@ -33,12 +31,22 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="app-layout">
-      <Header className="header-footer-common" />
-      <Menu activeMenu={activeMenu} onMenuClick={handleMenuClick} />
-      <MainContent activeMenu={activeMenu} />
-      <Footer className="header-footer-common" />
-    </div>
+    <AuthProvider>
+      <div className="app-layout">
+        <Header className="header-footer-common" />
+        <Menu activeMenu={activeMenu} onMenuClick={handleMenuClick} />
+        {activeMenu === 'login' ? (
+          <Login />
+        ) : activeMenu === 'create' ? (
+          <PrivateRoute>
+            <MainContent activeMenu={activeMenu} />
+          </PrivateRoute>
+        ) : (
+          <MainContent activeMenu={activeMenu} />
+        )}
+        <Footer className="header-footer-common" />
+      </div>
+    </AuthProvider>
   );
 };
 
