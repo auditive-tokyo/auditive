@@ -1,7 +1,5 @@
 import React from 'react';
 import Contact from './Contact/Contact';
-import NewTunesContent from './NewTunesContent/NewTunesContent';
-import PastReleasesContent from './PastReleasesContent/PastReleasesContent';
 import CreateContent from './CreateContent/CreateContent';
 import ShowContent from './ShowContent/ShowContent';
 import { MenuOption, VALID_MENU_OPTIONS } from '../Menu/Menu';

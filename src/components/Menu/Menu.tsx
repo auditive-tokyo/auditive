@@ -4,10 +4,10 @@ import { useAuth } from '../../Auth/AuthContext';
 import { useContent } from '../../hooks/useContent';  // 追加
 
 // MenuOptionの型を更新して動的なIDを許可
-export type MenuOption = 'new-tunes' | 'past-releases' | 'contact' | 'create' | 'login' | string;
+export type MenuOption = 'contact' | 'create' | 'login' | string;
 
 // 静的なメニューオプションの定義
-export const VALID_MENU_OPTIONS: MenuOption[] = ['new-tunes', 'past-releases', 'contact', 'create', 'login'];
+export const VALID_MENU_OPTIONS: MenuOption[] = ['contact', 'create', 'login'];
 
 interface MenuItem {
   name: MenuOption;
@@ -53,11 +53,9 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
 
   // 静的メニュー項目と動的ページを結合
   const menuItems: MenuItem[] = [
-    { name: 'new-tunes', label: 'NEW TUNES' },
-    { name: 'past-releases', label: 'PAST RELEASES' },
+    ...dynamicPages,
     { name: 'contact', label: 'CONTACT' },
-    ...(isAuthenticated ? [{ name: 'create', label: 'CREATE PAGE' }] : []),
-    ...dynamicPages
+    ...(isAuthenticated ? [{ name: 'create', label: 'CREATE PAGE' }] : [])    
   ];
 
   // スプリングアニメーションの設定を更新
