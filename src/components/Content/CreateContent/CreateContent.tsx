@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import { useContent } from '../../../hooks/useContent';
 
 const CreateContent: React.FC = () => {
@@ -9,11 +11,25 @@ const CreateContent: React.FC = () => {
   const { createContent } = useContent();
   const [isLoading, setIsLoading] = useState(false);
 
+  const components = {
+    // divやiframeなどのHTMLをそのまま扱えるようにする
+    p: ({ children }) => {
+      if (typeof children === 'string' && (
+        children.includes('<iframe') || 
+        children.includes('<div') || 
+        children.includes('<span')
+      )) {
+        return <div dangerouslySetInnerHTML={{ __html: children }} />;
+      }
+      return <p>{children}</p>;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent, status: 'draft' | 'published') => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await createContent(title, content, status);  // statusを渡す
+      await createContent(title, content, status);
       alert(`Content ${status === 'draft' ? 'saved as draft' : 'published'} successfully!`);
       setTitle('');
       setContent('');
@@ -24,6 +40,27 @@ const CreateContent: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  const ActionButtons = () => (
+    <div className="flex gap-4">
+      <button
+        type="button"
+        onClick={(e) => handleSubmit(e, 'draft')}
+        disabled={isLoading}
+        className="flex-1 bg-gray-500 text-white px-4 py-2 rounded disabled:bg-gray-700"
+      >
+        {isLoading ? 'Saving...' : 'Save as Draft'}
+      </button>
+      <button
+        type="button"
+        onClick={(e) => handleSubmit(e, 'published')}
+        disabled={isLoading}
+        className="flex-1 bg-cyan-500 text-white px-4 py-2 rounded disabled:bg-gray-700"
+      >
+        {isLoading ? 'Publishing...' : 'Publish'}
+      </button>
+    </div>
+  );
 
   return (
     <div className="p-5 bg-black/50 rounded-lg">
@@ -60,31 +97,23 @@ const CreateContent: React.FC = () => {
             className="p-2 bg-gray-800 text-white rounded min-h-[400px] font-mono"
             required
           />
-          <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={(e) => handleSubmit(e, 'draft')}
-              disabled={isLoading}
-              className="flex-1 bg-gray-500 text-white px-4 py-2 rounded disabled:bg-gray-700"
-            >
-              {isLoading ? 'Saving...' : 'Save as Draft'}
-            </button>
-            <button
-              type="button"
-              onClick={(e) => handleSubmit(e, 'published')}
-              disabled={isLoading}
-              className="flex-1 bg-cyan-500 text-white px-4 py-2 rounded disabled:bg-gray-700"
-            >
-              {isLoading ? 'Publishing...' : 'Publish'}
-            </button>
-          </div>
+          <ActionButtons />
         </form>
       ) : (
-        <div className="preview-content bg-gray-800 p-4 rounded">
-          <h1 className="text-2xl mb-4 text-white">{title}</h1>
-          <div className="prose prose-invert max-w-none">
-            <ReactMarkdown>{content}</ReactMarkdown>
+        <div className="flex flex-col gap-4">
+          <div className="preview-content bg-gray-800 p-4 rounded">
+            <h1 className="text-2xl mb-4 text-white">{title}</h1>
+            <div className="prose prose-invert max-w-none">
+              <ReactMarkdown 
+                rehypePlugins={[rehypeRaw]}
+                remarkPlugins={[remarkGfm]}
+                components={components}
+              >
+                {content}
+              </ReactMarkdown>
+            </div>
           </div>
+          <ActionButtons />
         </div>
       )}
     </div>
