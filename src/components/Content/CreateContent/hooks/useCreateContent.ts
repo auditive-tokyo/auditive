@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useContent } from '../../../../hooks/useContent';
+import { useSubmitContent } from './useSubmitContent';
 
 interface UseCreateContentReturn {
   title: string;
@@ -14,22 +14,13 @@ export const useCreateContent = (): UseCreateContentReturn => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { createContent } = useContent();
-
-  const handleSubmit = async (status: 'draft' | 'published') => {
-    setIsLoading(true);
-    try {
-      await createContent(title, content, status);
-      alert(`Content ${status === 'draft' ? 'saved as draft' : 'published'} successfully!`);
-      setTitle('');
-      setContent('');
-    } catch (error) {
-      console.error('Error creating content:', error);
-      alert('Failed to create content');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { handleSubmit } = useSubmitContent({
+    title,
+    content,
+    setTitle,
+    setContent,
+    setIsLoading
+  });
 
   return {
     title,
