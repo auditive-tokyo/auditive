@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { useContent } from '../../../hooks/useContent';
+import { ActionButtons } from './components/ActionButtons';
 
 const CreateContent: React.FC = () => {
   const [title, setTitle] = useState('');
@@ -25,8 +26,7 @@ const CreateContent: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent, status: 'draft' | 'published') => {
-    e.preventDefault();
+  const handleSubmit = async (status: 'draft' | 'published') => {
     setIsLoading(true);
     try {
       await createContent(title, content, status);
@@ -40,27 +40,6 @@ const CreateContent: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-  const ActionButtons = () => (
-    <div className="flex gap-4">
-      <button
-        type="button"
-        onClick={(e) => handleSubmit(e, 'draft')}
-        disabled={isLoading}
-        className="flex-1 bg-gray-500 text-white px-4 py-2 rounded disabled:bg-gray-700"
-      >
-        {isLoading ? 'Saving...' : 'Save as Draft'}
-      </button>
-      <button
-        type="button"
-        onClick={(e) => handleSubmit(e, 'published')}
-        disabled={isLoading}
-        className="flex-1 bg-cyan-500 text-white px-4 py-2 rounded disabled:bg-gray-700"
-      >
-        {isLoading ? 'Publishing...' : 'Publish'}
-      </button>
-    </div>
-  );
 
   return (
     <div className="p-5 bg-black/50 rounded-lg">
@@ -81,7 +60,7 @@ const CreateContent: React.FC = () => {
       </div>
 
       {!preview ? (
-        <form className="flex flex-col gap-4">
+        <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
           <input
             type="text"
             value={title}
@@ -97,7 +76,7 @@ const CreateContent: React.FC = () => {
             className="p-2 bg-gray-800 text-white rounded min-h-[400px] font-mono"
             required
           />
-          <ActionButtons />
+          <ActionButtons isLoading={isLoading} onSubmit={handleSubmit} />
         </form>
       ) : (
         <div className="flex flex-col gap-4">
@@ -113,7 +92,7 @@ const CreateContent: React.FC = () => {
               </ReactMarkdown>
             </div>
           </div>
-          <ActionButtons />
+          <ActionButtons isLoading={isLoading} onSubmit={handleSubmit} />
         </div>
       )}
     </div>
