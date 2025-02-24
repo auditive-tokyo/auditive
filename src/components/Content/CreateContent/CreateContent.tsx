@@ -3,14 +3,12 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { useContent } from '../../../hooks/useContent';
+import { useCreateContent } from './hooks/useCreateContent';
 import { ActionButtons } from './components/ActionButtons';
 
 const CreateContent: React.FC = () => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
   const [preview, setPreview] = useState(false);
-  const { createContent } = useContent();
-  const [isLoading, setIsLoading] = useState(false);
+  const { title, content, isLoading, setTitle, setContent, handleSubmit } = useCreateContent();
 
   const components = {
     // divやiframeなどのHTMLをそのまま扱えるようにする
@@ -23,21 +21,6 @@ const CreateContent: React.FC = () => {
         return <div dangerouslySetInnerHTML={{ __html: children }} />;
       }
       return <p>{children}</p>;
-    }
-  };
-
-  const handleSubmit = async (status: 'draft' | 'published') => {
-    setIsLoading(true);
-    try {
-      await createContent(title, content, status);
-      alert(`Content ${status === 'draft' ? 'saved as draft' : 'published'} successfully!`);
-      setTitle('');
-      setContent('');
-    } catch (error) {
-      console.error('Error creating content:', error);
-      alert('Failed to create content');
-    } finally {
-      setIsLoading(false);
     }
   };
 
