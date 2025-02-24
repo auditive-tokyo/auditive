@@ -8,12 +8,25 @@ import { ActionButtons } from './components/ActionButtons';
 
 const CreateContent: React.FC = () => {
   const [preview, setPreview] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
   const { title, content, isLoading, setTitle, setContent, handleSubmit } = useCreateContent();
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value;
+    setContent(newContent);
+    
+    // h1タグまたは#で始まる行があるかチェック
+    const hasH1 = newContent.toLowerCase().includes('<h1') ||
+                  newContent.split('\n').some(line => line.trim().startsWith('# '));
+    setShowWarning(hasH1);
+  };
 
   const components = {
     // divやiframeなどのHTMLをそのまま扱えるようにする
     p: ({ children }) => {
       if (typeof children === 'string' && (
+        children.includes('<h') ||
+        children.includes('<a') ||
         children.includes('<iframe') || 
         children.includes('<div') || 
         children.includes('<span')
@@ -52,13 +65,20 @@ const CreateContent: React.FC = () => {
             className="p-2 bg-gray-800 text-white rounded"
             required
           />
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Content (Markdown supported)"
-            className="p-2 bg-gray-800 text-white rounded min-h-[400px] font-mono"
-            required
-          />
+          <div className="relative">
+            <textarea
+              value={content}
+              onChange={handleContentChange}
+              placeholder="Content (Markdown supported)"
+              className="p-2 bg-gray-800 text-white rounded min-h-[400px] font-mono w-full"
+              required
+            />
+            {showWarning && (
+              <div className="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded m-2 text-sm">
+                Please use the title field for main headings instead of # or &lt;h1&gt;
+              </div>
+            )}
+          </div>
           <ActionButtons isLoading={isLoading} onSubmit={handleSubmit} />
         </form>
       ) : (
