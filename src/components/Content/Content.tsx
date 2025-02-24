@@ -3,9 +3,9 @@ import Contact from './Contact/Contact';
 import NewTunesContent from './NewTunesContent/NewTunesContent';
 import PastReleasesContent from './PastReleasesContent/PastReleasesContent';
 import CreateContent from './CreateContent/CreateContent';
+import ShowContent from './ShowContent/ShowContent';
+import { MenuOption, VALID_MENU_OPTIONS } from '../Menu/Menu';
 import './styles/contentStyles.css';
-
-export type MenuOption = 'new-tunes' | 'past-releases' | 'contact' | 'create';
 
 interface ContentProps {
   activeMenu: MenuOption;
@@ -13,6 +13,12 @@ interface ContentProps {
 
 const Content: React.FC<ContentProps> = ({ activeMenu }) => {
   const renderContent = () => {
+    const staticMenus = VALID_MENU_OPTIONS.filter(menu => menu !== 'login');
+    
+    if (!staticMenus.includes(activeMenu)) {
+      return <ShowContent id={activeMenu} />;
+    }
+
     switch (activeMenu) {
       case 'new-tunes':
         return <NewTunesContent />;

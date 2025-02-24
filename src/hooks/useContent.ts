@@ -94,9 +94,35 @@ export const useContent = () => {
     }
   };
 
+  const getAllContents = async () => {
+    try {
+      const result = await client.graphql({
+        query: `
+          query ListContents {
+            listContents {
+              items {
+                id
+                title
+                content
+                status
+                createdAt
+                updatedAt
+              }
+            }
+          }
+        `
+      });
+      return result.data.listContents.items as Content[];
+    } catch (error) {
+      console.error('Error fetching contents:', error);
+      throw error;
+    }
+  };
+
   return {
     createContent,
     updateContent,
-    getContent
+    getContent,
+    getAllContents
   };
 };

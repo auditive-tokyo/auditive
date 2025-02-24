@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { animated, useSprings } from 'react-spring';
 import { useAuth } from '../../Auth/AuthContext';
+import { useContent } from '../../hooks/useContent';  // 追加
 
-export type MenuOption = 'new-tunes' | 'past-releases' | 'contact' | 'create' | 'login';
+// MenuOptionの型を更新して動的なIDを許可
+export type MenuOption = 'new-tunes' | 'past-releases' | 'contact' | 'create' | 'login' | string;
 
+// 静的なメニューオプションの定義
 export const VALID_MENU_OPTIONS: MenuOption[] = ['new-tunes', 'past-releases', 'contact', 'create', 'login'];
 
 interface MenuItem {
   name: MenuOption;
   label: string;
+  isDynamic?: boolean;  // 動的ページかどうかを識別
 }
 
 interface MenuProps {
@@ -22,16 +26,41 @@ const AnimatedLi = animated.li as unknown as React.FC<
 
 export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth();  // 追加
+  const [dynamicPages, setDynamicPages] = useState<MenuItem[]>([]);
+  const { isAuthenticated, logout } = useAuth();
+  const { getAllContents } = useContent();
 
+  // 動的ページの取得
+  useEffect(() => {
+    const fetchPages = async () => {
+      try {
+        const contents = await getAllContents();
+        const publishedPages = contents
+          .filter(content => content.status === 'PUBLISHED')
+          .map(content => ({
+            name: content.id,
+            label: content.title,
+            isDynamic: true
+          }));
+        setDynamicPages(publishedPages);
+      } catch (error) {
+        console.error('Error fetching pages:', error);
+      }
+    };
+
+    fetchPages();
+  }, [getAllContents]);
+
+  // 静的メニュー項目と動的ページを結合
   const menuItems: MenuItem[] = [
     { name: 'new-tunes', label: 'NEW TUNES' },
     { name: 'past-releases', label: 'PAST RELEASES' },
     { name: 'contact', label: 'CONTACT' },
-    // Create Pageはログイン時のみ表示
     ...(isAuthenticated ? [{ name: 'create', label: 'CREATE PAGE' }] : []),
+    ...dynamicPages
   ];
 
+  // スプリングアニメーションの設定を更新
   const springs = useSprings(
     menuItems.length,
     menuItems.map((item) => ({
@@ -89,6 +118,7 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
                 relative px-4 py-2 
                 text-menu
                 cursor-pointer
+                ${item.isDynamic ? 'text-gray-300' : ''}  // 動的ページは少し色を変える
                 before:absolute before:left-0 before:bottom-0
                 before:w-full before:h-[1px]
                 before:bg-cyan-400
