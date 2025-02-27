@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { animated, useSprings } from 'react-spring';
-import { useAuth } from '../../Auth/AuthContext';
+import { useAuth } from '../../auth/AuthContext';
 import { useContent } from '../../hooks/useContent';  // 追加
+import { SpringValue } from 'react-spring';
 
 // MenuOptionの型を更新して動的なIDを許可
 export type MenuOption = 'contact' | 'create' | 'login' | string;
@@ -13,6 +14,8 @@ interface MenuItem {
   name: MenuOption;
   label: string;
   isDynamic?: boolean;
+  isDraft?: boolean;
+  isSeparator?: boolean;
 }
 
 interface MenuProps {
@@ -20,8 +23,26 @@ interface MenuProps {
   onMenuClick: (menu: MenuOption) => void;
 }
 
+// Define a type for the animated styles
+interface AnimatedStyles {
+  transform?: SpringValue<string>;
+  opacity?: SpringValue<number>;
+  y?: SpringValue<number>;
+  color?: SpringValue<string>;
+  [key: string]: SpringValue<any> | undefined;
+}
+
+// Update the AnimatedLi definition
 const AnimatedLi = animated.li as unknown as React.FC<
-  React.LiHTMLAttributes<HTMLLIElement> & { style?: any }
+  Omit<React.LiHTMLAttributes<HTMLLIElement>, 'style'> & { 
+    style?: {
+      transform?: SpringValue<string>;
+      opacity?: SpringValue<number>;
+      y?: SpringValue<number>;
+      color?: SpringValue<string>;
+      [key: string]: SpringValue<any> | undefined;
+    }
+  }
 >;
 
 export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
@@ -35,27 +56,42 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
     const fetchPages = async () => {
       try {
         const contents = await getAllContents();
-        const publishedPages = contents
-          .filter(content => content.status === 'PUBLISHED')
+        
+        // Show PUBLISHED pages to everyone, and DRAFT pages only to authenticated users
+        const dynamicMenuPages = contents
+          .filter(content => 
+            content.status === 'PUBLISHED' || 
+            (isAuthenticated && content.status === 'DRAFT')
+          )
           .map(content => ({
             name: content.id,
-            label: content.title,
-            isDynamic: true
+            label: content.status === 'DRAFT' ? `${content.title} (Draft)` : content.title,
+            isDynamic: true,
+            isDraft: content.status === 'DRAFT'
           }));
-        setDynamicPages(publishedPages);
+          
+        setDynamicPages(dynamicMenuPages);
       } catch (error) {
         console.error('Error fetching pages:', error);
       }
     };
 
     fetchPages();
-  }, [getAllContents]);
+  }, [getAllContents, isAuthenticated]); // Add isAuthenticated as dependency to refetch when auth state changes
 
   // 静的メニュー項目と動的ページを結合
+  const publishedPages = dynamicPages.filter(page => !page.isDraft);
+  const draftPages = dynamicPages.filter(page => page.isDraft);
+
+  // メニュー項目の再構成 - Draft pages appear after CREATE PAGE
   const menuItems: MenuItem[] = [
-    ...dynamicPages,
+    ...publishedPages,  // 公開ページ
     { name: 'contact', label: 'CONTACT' },
-    ...(isAuthenticated ? [{ name: 'create', label: 'CREATE PAGE' }] : [])    
+    ...(isAuthenticated ? [
+      { name: 'create', label: 'CREATE PAGE' },
+      ...(draftPages.length > 0 ? [{ name: 'drafts-separator', label: '-- DRAFTS --', isDraft: true, isSeparator: true }] : []),
+      ...draftPages  // ドラフトページ（ログイン時のみ、CREATE PAGEの後に表示）
+    ] : [])    
   ];
 
   // スプリングアニメーションの設定を更新
@@ -111,19 +147,21 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
           {menuItems.map((item, index) => (
             <AnimatedLi
               key={item.name}
-              onClick={() => handleMenuClick(item.name)}
+              onClick={item.isSeparator ? undefined : () => handleMenuClick(item.name)}
               className={`
                 relative px-4 py-2 
                 text-menu
-                cursor-pointer
-                ${item.isDynamic ? 'text-gray-300' : ''}  // 動的ページは少し色を変える
+                ${!item.isSeparator ? 'cursor-pointer' : 'cursor-default'}
+                ${item.isDynamic ? 'text-gray-300' : ''}
+                ${item.isDraft && !item.isSeparator ? 'text-amber-400' : ''}
+                ${item.isSeparator ? 'text-gray-500 text-sm font-bold' : ''}
                 before:absolute before:left-0 before:bottom-0
                 before:w-full before:h-[1px]
                 before:bg-cyan-400
                 before:transform before:scale-x-0
                 before:transition-transform before:duration-300
-                hover:before:scale-x-100
-                ${activeMenu === item.name ? 'before:scale-x-100' : ''}
+                ${!item.isSeparator ? 'hover:before:scale-x-100' : ''}
+                ${activeMenu === item.name && !item.isSeparator ? 'before:scale-x-100' : ''}
               `}
               style={springs[index]}
             >
