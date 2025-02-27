@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
-import { Menu, MenuOption, VALID_MENU_OPTIONS } from './components/Menu/Menu';
+import { Menu, MenuOption } from './components/Menu/Menu';
 import { AuthProvider } from './auth/AuthContext';
 import PrivateRoute from './auth/PrivateRoute';
 import Login from './components/Content/Login/Login';
@@ -11,44 +11,38 @@ import { useContent } from './hooks/useContent';
 const App: React.FC = () => {
   const { getAllContents } = useContent();
   const [defaultPage, setDefaultPage] = useState<string>('');
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
   // メニューアイテムのフェッチとデフォルトページの設定
   useEffect(() => {
     let isMounted = true;
 
+    // Simplified fetchMenuItems function
     const fetchMenuItems = async () => {
       try {
         const contents = await getAllContents();
         if (!isMounted) return;
-
-        const publishedPages = contents
-          .filter(content => content.status === 'PUBLISHED')
-          .map(content => ({
-            name: content.id,
-            label: content.title,
-            isDynamic: true
-          }));
         
-        const allMenuItems = [
-          ...publishedPages,
-          { name: 'contact', label: 'CONTACT' }
-        ];
+        // Just get the first published page for the default page
+        const publishedContents = contents.filter(content => content.status === 'PUBLISHED');
         
-        setMenuItems(allMenuItems);
-        
-        // デフォルトページを設定し、ハッシュが空の場合はURLを更新
-        if (allMenuItems.length > 0) {
-          const defaultPageId = allMenuItems[0].name;
+        // Set the default page if there's at least one published page
+        if (publishedContents.length > 0) {
+          const defaultPageId = publishedContents[0].id;
           setDefaultPage(defaultPageId);
           
-          // ハッシュが空の場合、デフォルトページのハッシュを設定
+          // Set hash if empty
           if (!window.location.hash) {
             window.location.hash = defaultPageId;
           }
+        } else {
+          // Default to contact if no published pages
+          setDefaultPage('contact');
+          if (!window.location.hash) {
+            window.location.hash = 'contact';
+          }
         }
       } catch (error) {
-        console.error('Error fetching menu items:', error);
+        console.error('Error fetching default page:', error);
       }
     };
 
@@ -88,7 +82,7 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <div className="app-layout">
-        <Header className="header-footer-common" />
+        <Header />
         <Menu activeMenu={activeMenu} onMenuClick={handleMenuClick} />
         {activeMenu === 'login' ? (
           <Login />
@@ -99,7 +93,7 @@ const App: React.FC = () => {
         ) : (
           <MainContent activeMenu={activeMenu} />
         )}
-        <Footer className="header-footer-common" />
+        <Footer />
       </div>
     </AuthProvider>
   );
