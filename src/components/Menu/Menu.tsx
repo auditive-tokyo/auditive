@@ -118,19 +118,19 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
         onClick={() => setIsOpen(!isOpen)}
         className="p-3 bg-black/30 rounded-md"
       >
-        <div className={`w-8 h-[3px] bg-white rounded-full transition-all duration-300 ${  // w-6 から w-8 に変更
+        <div className={`w-8 h-[3px] bg-white rounded-full transition-all duration-300 ${
           isOpen ? 'rotate-45 translate-y-[10px]' : ''
         }`} />
-        <div className={`w-8 h-[3px] bg-white rounded-full my-[7px] transition-opacity ${  // w-6 から w-8 に、my-[6px] から my-[7px] に変更
+        <div className={`w-8 h-[3px] bg-white rounded-full my-[7px] transition-opacity ${
           isOpen ? 'opacity-0' : 'opacity-100'
         }`} />
-        <div className={`w-8 h-[3px] bg-white rounded-full transition-all duration-300 ${  // w-6 から w-8 に変更
+        <div className={`w-8 h-[3px] bg-white rounded-full transition-all duration-300 ${
           isOpen ? '-rotate-45 -translate-y-[10px]' : ''
         }`} />
       </button>
 
       {/* メニュー本体 */}
-      <div className={`fixed top-0 left-0 h-full w-[300px] max-w-[500px] bg-black/85 transition-transform duration-300 ${
+      <div className={`fixed top-0 left-0 h-full w-[400px] bg-black/85 transition-transform duration-300 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* 閉じるボタン - 線を太く */}

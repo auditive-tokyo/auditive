@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { useContent } from '../../../hooks/useContent';
-import { Content } from '../../../API';
+import { Content } from '../../../types/content';
 
 interface ShowContentProps {
   id: string;

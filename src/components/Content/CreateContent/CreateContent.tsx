@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
-import { useContent } from '../../../hooks/useContent';
 import { useCreateContent } from './hooks/useCreateContent';
 import { ActionButtons } from './components/ActionButtons';
 

@@ -5,7 +5,7 @@ export const config = {
     GraphQL: {
       endpoint: import.meta.env.VITE_AMPLIFY_API_ENDPOINT,
       region: import.meta.env.VITE_AWS_REGION,
-      defaultAuthMode: 'apiKey',
+      defaultAuthMode: 'apiKey' as const, // Using type assertion
       apiKey: import.meta.env.VITE_APPSYNC_API_KEY
     }
   }

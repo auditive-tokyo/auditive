@@ -1,6 +1,4 @@
-import { Schema } from '@aws-amplify/core';
-
-export const schema: Schema = {
+export const schema = {
   models: {
     Content: {
       fields: {
@@ -23,4 +21,4 @@ export const schema: Schema = {
       }
     }
   }
-};
+} as const;

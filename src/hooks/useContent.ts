@@ -1,6 +1,5 @@
 import { generateClient } from '@aws-amplify/api';
-import { GraphQLQuery } from '@aws-amplify/api';
-import { Content } from '../API'; // 型定義が自動生成される
+import { Content } from '../types/content';
 
 const client = generateClient();
 
@@ -33,7 +32,13 @@ export const useContent = () => {
           }
         }
       });
-      return result.data.createContent as Content;
+      
+      // Type guard to ensure result has data property
+      if ('data' in result) {
+        return result.data.createContent as Content;
+      }
+      
+      throw new Error('Invalid GraphQL result format');
     } catch (error) {
       console.error('Error creating content:', error);
       throw error;
@@ -63,7 +68,13 @@ export const useContent = () => {
           }
         }
       });
-      return result.data.updateContent as Content;
+
+      // Type guard to ensure result has data property
+      if ('data' in result) {
+        return result.data.updateContent as Content;
+      }
+
+      throw new Error('Invalid GraphQL result format');
     } catch (error) {
       console.error('Detailed error:', JSON.stringify(error, null, 2));
       throw error;
@@ -87,7 +98,13 @@ export const useContent = () => {
         `,
         variables: { id }
       });
-      return result.data.getContent as Content;
+
+      // Type guard to ensure result has data property
+      if ('data' in result) {
+        return result.data.getContent as Content;
+      }
+
+      throw new Error('Invalid GraphQL result format');
     } catch (error) {
       console.error('Error fetching content:', error);
       throw error;
@@ -112,7 +129,13 @@ export const useContent = () => {
           }
         `
       });
-      return result.data.listContents.items as Content[];
+
+      // Type guard to ensure result has data property
+      if ('data' in result) {
+        return result.data.listContents.items as Content[];
+      }
+
+      throw new Error('Invalid GraphQL result format');
     } catch (error) {
       console.error('Error fetching contents:', error);
       throw error;
