@@ -21,7 +21,9 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
     menuItems,
     orderedPublishedPages,
     updateCustomOrder,
-    resetCustomOrder
+    resetCustomOrder,
+    defaultPageId,
+    setDefaultPage
   } = useMenuItems(isAuthenticated);
 
   // Handle drag end
@@ -70,6 +72,11 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
     setIsOpen(false);
   }, [logout, activeMenu, onMenuClick]);
 
+  // Add a handler for setting default page
+  const handleSetDefaultPage = useCallback((pageId: string) => {
+    setDefaultPage(pageId);
+  }, [setDefaultPage]);
+
   // Spring animations
   const springs = useSprings(
     menuItems.length,
@@ -102,6 +109,8 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
             isAuthenticated={isAuthenticated}
             onDragEnd={handleDragEnd}
             onResetOrder={resetCustomOrder}
+            defaultPageId={defaultPageId}
+            onSetDefaultPage={handleSetDefaultPage}
           />
         ) : (
           <NormalMenu

@@ -11,6 +11,12 @@ export const useMenuItems = (isAuthenticated: boolean) => {
     const savedOrder = localStorage.getItem('menuOrder');
     return savedOrder ? JSON.parse(savedOrder) : [];
   });
+  
+  // Add default page state
+  const [defaultPageId, setDefaultPageId] = useState<string>(() => {
+    const savedDefault = localStorage.getItem('defaultPage');
+    return savedDefault || 'contact';
+  });
 
   // Fetch dynamic pages
   useEffect(() => {
@@ -88,13 +94,21 @@ export const useMenuItems = (isAuthenticated: boolean) => {
     setCustomOrder([]);
     localStorage.removeItem('menuOrder');
   };
+  
+  // Add function to set default page
+  const setDefaultPage = (pageId: string) => {
+    setDefaultPageId(pageId);
+    localStorage.setItem('defaultPage', pageId);
+  };
 
   return {
     menuItems,
     orderedPublishedPages,
     draftPages,
     customOrder,
+    defaultPageId, // Expose the default page ID
     updateCustomOrder,
-    resetCustomOrder
+    resetCustomOrder,
+    setDefaultPage  // Expose the function to set default page
   };
 };

@@ -9,24 +9,28 @@ import Login from './components/Content/Login/Login';
 import { useContent } from './hooks/useContent';
 
 const App: React.FC = () => {
-  // Simplified activeMenu initialization
+  // Get default page from localStorage
+  const getDefaultPage = (): string => {
+    const savedDefault = localStorage.getItem('defaultPage');
+    return savedDefault || 'contact'; // Fallback to 'contact' if no default is set
+  };
+
+  // Initialize activeMenu with hash or default page
   const [activeMenu, setActiveMenu] = useState<MenuOption>(() => {
     const hash = window.location.hash.slice(1);
-    // Use 'contact' as the fallback instead of defaultPage
-    return hash || 'contact';
+    return hash || getDefaultPage();
   });
 
-  // Simplified hash change handler without defaultPage dependency
+  // Update hash change handler to use default page
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      // Use 'contact' as the fallback instead of defaultPage
-      setActiveMenu(hash || 'contact');
+      setActiveMenu(hash || getDefaultPage());
     };
 
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []); // No dependency on defaultPage anymore
+  }, []);
 
   const handleMenuClick = (menu: MenuOption) => {
     setActiveMenu(menu);
