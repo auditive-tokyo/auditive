@@ -18,6 +18,11 @@ const CyberCursor: React.FC = () => {
   const [forceRender, setForceRender] = useState(0);
   const animationFrameRef = useRef<number | null>(null);
   
+  // ユニークなグラデーションIDを生成
+  const gradientIds = useRef(
+    Array.from({ length: tentacleCount }, (_, i) => `tentacle-gradient-${i}`)
+  );
+  
   // アニメーションループ
   const updateAnimation = useCallback(() => {
     timeRef.current += 0.01;
@@ -207,18 +212,42 @@ const CyberCursor: React.FC = () => {
         height="300" 
         viewBox="-150 -150 300 300"
       >
+        {/* グラデーション定義 */}
+        <defs>
+          {gradientIds.current.map((id, index) => (
+            <linearGradient 
+              key={id} 
+              id={id} 
+              gradientUnits="userSpaceOnUse"
+              x1="0" y1="0" 
+              x2={Math.cos((index / tentacleCount) * Math.PI * 2) * 150}
+              y2={Math.sin((index / tentacleCount) * Math.PI * 2) * 150}
+            >
+              <stop offset="0%" stopColor={clicked 
+                ? `hsl(40, 100%, 60%)`
+                : `hsl(53, 100%, 50%)`
+              } stopOpacity="0.1" />
+              <stop offset="50%" stopColor={clicked 
+                ? `hsl(${40 + index * 4}, 100%, ${60 + index % 3 * 10}%)`
+                : `hsl(${53 + index * 3}, 100%, ${50 + index % 3 * 10}%)`
+              } stopOpacity="0.5" />
+              <stop offset="100%" stopColor={clicked 
+                ? `hsl(${40 + index * 4}, 100%, ${60 + index % 3 * 10}%)`
+                : `hsl(${53 + index * 3}, 100%, ${50 + index % 3 * 10}%)`
+              } stopOpacity="0.9" />
+            </linearGradient>
+          ))}
+        </defs>
+        
         {generateTentaclePaths().map((path, index) => (
           <path
             key={index}
             d={path}
-            stroke={clicked 
-              ? `hsl(${40 + index * 4}, 100%, ${60 + index % 3 * 10}%)` 
-              : `hsl(${53 + index * 3}, 100%, ${50 + index % 3 * 10}%)`}
+            stroke={`url(#${gradientIds.current[index % gradientIds.current.length]})`}
             strokeWidth={3 - (index % 3) * 0.7}
             fill="none"
             strokeLinecap="round"
             className={`tentacle-path tentacle-path-${index % 5}`}
-            opacity={0.7 - (index % tentacleCount) * 0.01}
           />
         ))}
       </svg>
