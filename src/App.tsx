@@ -6,7 +6,7 @@ import { Menu, MenuOption } from './components/Menu/Menu';
 import { AuthProvider } from './auth/AuthContext';
 import PrivateRoute from './auth/PrivateRoute';
 import Login from './components/Content/Login/Login';
-import { useContent } from './hooks/useContent';
+import CyberCursor from './components/CyberCursor/CyberCursor';
 
 const App: React.FC = () => {
   // Get default page from localStorage
@@ -40,6 +40,7 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <div className="app-layout">
+        <CyberCursor />
         <Header />
         <Menu activeMenu={activeMenu} onMenuClick={handleMenuClick} />
         {activeMenu === 'login' ? (
