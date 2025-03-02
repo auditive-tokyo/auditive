@@ -8,6 +8,14 @@ const CyberCursor: React.FC = () => {
   const [showEnergyPulse, setShowEnergyPulse] = useState(false);
   const [idleTimer, setIdleTimer] = useState<number | null>(null);
   
+  // 移動方向を追跡
+  const directionRef = useRef({ x: 1, y: 0 });
+  const isMovingRef = useRef(false);
+  const velocityRef = useRef(0);
+  
+  // 移行状態を記録するための状態
+  const transitionStateRef = useRef(0); // 0: 完全静止状態、1: 完全移動状態
+  
   // テンタクルの数
   const tentacleCount = 12;
   const tentacleLengthMin = 30;
@@ -22,12 +30,48 @@ const CyberCursor: React.FC = () => {
   const gradientIds = useRef(
     Array.from({ length: tentacleCount }, (_, i) => `tentacle-gradient-${i}`)
   );
+
+  // SVGサイズを動的に調整するための参照
+  const svgSizeRef = useRef({
+    width: 300,
+    height: 300,
+    viewBox: "-150 -150 300 300"
+  });
   
   // アニメーションループ
   const updateAnimation = useCallback(() => {
     timeRef.current += 0.01;
-    setForceRender(prev => prev + 1);
     
+    // 移動状態の更新
+    if (isMovingRef.current && velocityRef.current > 0.1) {
+      // 動いている場合、遷移状態を動きの方向へ徐々に上げる
+      transitionStateRef.current = Math.min(1, transitionStateRef.current + 0.05);
+    } else {
+      // 静止している場合、遷移状態を静止状態へ徐々に下げる
+      transitionStateRef.current = Math.max(0, transitionStateRef.current - 0.02);
+    }
+    
+    // 移動が止まったら徐々に速度を減衰させる
+    if (!isMovingRef.current && velocityRef.current > 0) {
+      velocityRef.current = Math.max(0, velocityRef.current - 0.03); // 減衰速度を遅くして自然に
+    }
+
+    // SVGサイズを動的に調整
+    const transitionState = transitionStateRef.current;
+    const baseSize = 112.5; // 基本サイズ（静止時）- 75%に縮小
+    const maxSize = 300;  // 最大サイズ（移動時）
+    const sizeRange = maxSize - baseSize;
+    const currentSize = baseSize + (sizeRange * transitionState);
+    const halfSize = currentSize / 2;
+    
+    svgSizeRef.current = {
+      width: currentSize,
+      height: currentSize,
+      viewBox: `-${halfSize} -${halfSize} ${currentSize} ${currentSize}`
+    };
+    
+    // 再レンダリングを強制
+    setForceRender(prev => prev + 1);
     animationFrameRef.current = requestAnimationFrame(updateAnimation);
   }, []);
 
@@ -43,14 +87,37 @@ const CyberCursor: React.FC = () => {
 
   useEffect(() => {
     const updateMousePosition = (e: MouseEvent) => {
+      // 前の位置を保存
       setPrevPosition(position);
-      setPosition({ x: e.clientX, y: e.clientY });
+      const newPosition = { x: e.clientX, y: e.clientY };
+      setPosition(newPosition);
       
-      // マウスの移動距離を計算
-      const distance = Math.sqrt(
-        Math.pow(e.clientX - prevPosition.x, 2) + 
-        Math.pow(e.clientY - prevPosition.y, 2)
-      );
+      // 移動距離と方向を計算
+      const dx = newPosition.x - position.x;
+      const dy = newPosition.y - position.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // 有意な動きがあった場合のみ方向を更新
+      if (distance > 3) {
+        isMovingRef.current = true;
+        
+        // 新しい方向ベクトル（正規化）
+        const newDirection = {
+          x: dx / distance,
+          y: dy / distance
+        };
+        
+        // 現在の方向と新しい方向を補間（よりなめらかな変化）
+        directionRef.current = {
+          x: directionRef.current.x * 0.8 + newDirection.x * 0.2,
+          y: directionRef.current.y * 0.8 + newDirection.y * 0.2
+        };
+        
+        // 速度を更新（移動距離に応じて）
+        velocityRef.current = Math.min(1, distance / 20);
+      } else {
+        isMovingRef.current = false;
+      }
 
       // マウス移動のたびにタイマーをクリア
       if (idleTimer) {
@@ -99,25 +166,53 @@ const CyberCursor: React.FC = () => {
     };
   }, [position, prevPosition, clicked, idleTimer]);
 
-  // テンタクルのパス生成
+  // テンタクルのパス生成 - 移行状態を考慮して生成
   const generateTentaclePaths = useCallback(() => {
     const paths = [];
     const time = timeRef.current;
+    const direction = directionRef.current;
+    const velocity = velocityRef.current;
+    const transitionState = transitionStateRef.current; // 移行状態 0-1
+    
+    // イージング関数で移行をよりスムーズに
+    const easeTransition = (t: number) => {
+      // イーズインアウト二次関数
+      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    };
+    
+    const easedTransition = easeTransition(transitionState);
+    
+    // 移動方向の角度を計算
+    const moveAngle = Math.atan2(direction.y, direction.x);
     
     // 複数のテンタクルを生成
     for (let i = 0; i < tentacleCount; i++) {
-      // 各テンタクルの角度を計算（均等に分布）
-      const baseAngle = (i / tentacleCount) * Math.PI * 2;
-      // 時間経過で少しずつ回転
-      const angle = baseAngle + Math.sin(time * 0.5) * 0.2;
+      // 静止状態の角度 - 360度均等分布
+      const staticAngle = (i / tentacleCount) * Math.PI * 2;
       
-      // テンタクルの長さ（クリック時は長く）
+      // 移動状態の角度 - 進行方向の反対側に集中
+      const spread = 2.4; // 扇形の広さ
+      const movingAngle = moveAngle + Math.PI + (i / (tentacleCount - 1) - 0.5) * spread;
+      
+      // 移行状態に応じて2つの角度を補間
+      const baseAngle = staticAngle * (1 - easedTransition) + movingAngle * easedTransition;
+      
+      // 時間経過で少しずつ揺らぎを加える
+      const angle = baseAngle + Math.sin(time * 0.5 + i * 0.3) * (0.2 - 0.1 * easedTransition);
+      
+      // テンタクルの長さ - 移動速度と移行状態に応じて調整
+      // 静止時は最小長の50%程度まで縮小
+      const staticMultiplier = 0.5; // 静止時の長さ倍率
+      const moveMultiplier = 1 + velocity * 2 * easedTransition; // 移動時の長さ倍率
+      const lengthMultiplier = staticMultiplier + (moveMultiplier - staticMultiplier) * easedTransition;
+      
       const length = tentacleLengthMin + 
-                    (clicked ? tentacleLengthMax * 1.5 : tentacleLengthMax) * 
+                    (clicked ? tentacleLengthMax * 1.6 : tentacleLengthMax) * 
+                    lengthMultiplier *
                     (0.6 + 0.4 * Math.sin(time * 2 + i * 0.7));
                     
-      // 各テンタクルの制御点の数
-      const controlPoints = 4;
+      // 各テンタクルの制御点の数 - 速度と移行状態に応じて変化
+      const controlPoints = Math.max(3, Math.floor(3 + velocity * 3 * easedTransition));
       
       let path = `M0,0 `;
       
@@ -126,9 +221,10 @@ const CyberCursor: React.FC = () => {
         // 各点の位置（距離）
         const segmentLength = (j / controlPoints) * length;
         
-        // うねうね動くための角度オフセット
+        // うねうね動くための角度オフセット - 移行状態に応じて減少
+        const waveStrength = 0.5 * (1 - easedTransition * 0.5); // 静止時ほど大きくうねる
         const waveOffset = 
-          Math.sin(time * 3 + i * 0.5 + j * 0.8) * 0.5 * 
+          Math.sin(time * 3 + i * 0.5 + j * 0.8) * waveStrength * 
           Math.min(1, j / 2); // 先端ほど大きくうねる
         
         // 各点の座標計算
@@ -144,9 +240,16 @@ const CyberCursor: React.FC = () => {
           const prevY = Math.sin(angle + Math.sin(time * 3 + i * 0.5 + (j-1) * 0.8) * 0.3 * Math.min(1, (j-1) / 2)) * 
                        ((j-1) / controlPoints) * length;
           
-          // 制御点を計算
-          const cpX = prevX + (x - prevX) * 0.5 + Math.sin(time * 2 + i * 1.5) * 10;
-          const cpY = prevY + (y - prevY) * 0.5 + Math.cos(time * 2 + i * 1.5) * 10;
+          // 制御点を計算 - 移動方向にやや曲げる（移行状態に応じて）
+          const bendFactor = velocity * 5 * easedTransition; // 移行状態による影響
+          const directionInfluence = j / controlPoints; // 先端ほど方向の影響が強い
+          
+          const cpX = prevX + (x - prevX) * 0.5 + 
+                    Math.sin(time * 2 + i * 1.5) * 10 * (1 - easedTransition * 0.5) +
+                    direction.x * bendFactor * directionInfluence;
+          const cpY = prevY + (y - prevY) * 0.5 + 
+                    Math.cos(time * 2 + i * 1.5) * 10 * (1 - easedTransition * 0.5) +
+                    direction.y * bendFactor * directionInfluence;
           
           path += `Q${cpX},${cpY} ${x},${y} `;
         }
@@ -207,36 +310,52 @@ const CyberCursor: React.FC = () => {
           left: `${position.x}px`, 
           top: `${position.y}px`,
           transform: 'translate(-50%, -50%)',
+          opacity: 0.7 + transitionStateRef.current * 0.3 // 動きに応じて透明度も変化
         }}
-        width="300" 
-        height="300" 
-        viewBox="-150 -150 300 300"
+        width={svgSizeRef.current.width}
+        height={svgSizeRef.current.height}
+        viewBox={svgSizeRef.current.viewBox}
       >
         {/* グラデーション定義 */}
         <defs>
-          {gradientIds.current.map((id, index) => (
-            <linearGradient 
-              key={id} 
-              id={id} 
-              gradientUnits="userSpaceOnUse"
-              x1="0" y1="0" 
-              x2={Math.cos((index / tentacleCount) * Math.PI * 2) * 150}
-              y2={Math.sin((index / tentacleCount) * Math.PI * 2) * 150}
-            >
-              <stop offset="0%" stopColor={clicked 
-                ? `hsl(40, 100%, 60%)`
-                : `hsl(53, 100%, 50%)`
-              } stopOpacity="0.1" />
-              <stop offset="50%" stopColor={clicked 
-                ? `hsl(${40 + index * 4}, 100%, ${60 + index % 3 * 10}%)`
-                : `hsl(${53 + index * 3}, 100%, ${50 + index % 3 * 10}%)`
-              } stopOpacity="0.5" />
-              <stop offset="100%" stopColor={clicked 
-                ? `hsl(${40 + index * 4}, 100%, ${60 + index % 3 * 10}%)`
-                : `hsl(${53 + index * 3}, 100%, ${50 + index % 3 * 10}%)`
-              } stopOpacity="0.9" />
-            </linearGradient>
-          ))}
+          {gradientIds.current.map((id, index) => {
+            // 移行状態を考慮したグラデーション方向の設定
+            const moveAngle = Math.atan2(directionRef.current.y, directionRef.current.x);
+            const transitionState = transitionStateRef.current;
+            
+            // 静止状態の角度（均等分布）
+            const staticAngle = (index / tentacleCount) * Math.PI * 2;
+            
+            // 移動状態の角度（方向性）
+            const movingAngle = moveAngle + Math.PI + (index / (tentacleCount - 1) - 0.5) * 2.4;
+            
+            // 移行状態に応じて補間
+            const gradientAngle = staticAngle * (1 - transitionState) + movingAngle * transitionState;
+              
+            return (
+              <linearGradient 
+                key={id} 
+                id={id} 
+                gradientUnits="userSpaceOnUse"
+                x1="0" y1="0" 
+                x2={Math.cos(gradientAngle) * 150}
+                y2={Math.sin(gradientAngle) * 150}
+              >
+                <stop offset="0%" stopColor={clicked 
+                  ? `hsl(40, 100%, 60%)`
+                  : `hsl(53, 100%, 50%)`
+                } stopOpacity="0.1" />
+                <stop offset="50%" stopColor={clicked 
+                  ? `hsl(${40 + index * 4}, 100%, ${60 + index % 3 * 10}%)`
+                  : `hsl(${53 + index * 3}, 100%, ${50 + index % 3 * 10}%)`
+                } stopOpacity="0.5" />
+                <stop offset="100%" stopColor={clicked 
+                  ? `hsl(${40 + index * 4}, 100%, ${60 + index % 3 * 10}%)`
+                  : `hsl(${53 + index * 3}, 100%, ${50 + index % 3 * 10}%)`
+                } stopOpacity="0.9" />
+              </linearGradient>
+            );
+          })}
         </defs>
         
         {generateTentaclePaths().map((path, index) => (
@@ -244,7 +363,7 @@ const CyberCursor: React.FC = () => {
             key={index}
             d={path}
             stroke={`url(#${gradientIds.current[index % gradientIds.current.length]})`}
-            strokeWidth={3 - (index % 3) * 0.7}
+            strokeWidth={(2 - (index % 3) * 0.5) * (0.7 + transitionStateRef.current * 0.3)} // 動きに応じて線幅も変化
             fill="none"
             strokeLinecap="round"
             className={`tentacle-path tentacle-path-${index % 5}`}
