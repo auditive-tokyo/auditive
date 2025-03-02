@@ -70,21 +70,24 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
           style={springs[index]}
         >
           <div className="flex items-center justify-between w-full">
-            <span>{item.label}</span>
+            <div className="flex items-center">
+              {/* 削除ボタンをここに移動 - ラベルの左側に配置 */}
+              {isAuthenticated && item.isDynamic && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDelete(item.name);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 mr-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs transition-opacity"
+                  aria-label={`Delete ${item.label}`}
+                >
+                  ✕
+                </button>
+              )}
+              <span>{item.label}</span>
+            </div>
             
-            {/* Delete button for authenticated users and dynamic pages */}
-            {isAuthenticated && item.isDynamic && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setConfirmDelete(item.name);
-                }}
-                className="opacity-0 group-hover:opacity-100 ml-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs transition-opacity"
-                aria-label={`Delete ${item.label}`}
-              >
-                ✕
-              </button>
-            )}
+            {/* 元々あった削除ボタンの位置は空にする */}
           </div>
           
           {/* Delete confirmation dialog */}
