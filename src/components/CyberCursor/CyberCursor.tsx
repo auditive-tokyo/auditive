@@ -1,18 +1,43 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './CyberCursor.css';
 
 const CyberCursor: React.FC = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [prevPosition, setPrevPosition] = useState({ x: 0, y: 0 });
   const [clicked, setClicked] = useState(false);
-  const [showLightning, setShowLightning] = useState(false);
-  const [lightningPattern, setLightningPattern] = useState(0);
   const [showEnergyPulse, setShowEnergyPulse] = useState(false);
   const [idleTimer, setIdleTimer] = useState<number | null>(null);
+  
+  // テンタクルの数
+  const tentacleCount = 12;
+  const tentacleLengthMin = 30;
+  const tentacleLengthMax = 100;
+  
+  // アニメーション用のタイムスタンプ
+  const timeRef = useRef(0);
+  const [forceRender, setForceRender] = useState(0);
+  const animationFrameRef = useRef<number | null>(null);
+  
+  // アニメーションループ
+  const updateAnimation = useCallback(() => {
+    timeRef.current += 0.01;
+    setForceRender(prev => prev + 1);
+    
+    animationFrameRef.current = requestAnimationFrame(updateAnimation);
+  }, []);
+
+  useEffect(() => {
+    animationFrameRef.current = requestAnimationFrame(updateAnimation);
+    
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [updateAnimation]);
 
   useEffect(() => {
     const updateMousePosition = (e: MouseEvent) => {
-      // 前回の位置を保存
       setPrevPosition(position);
       setPosition({ x: e.clientX, y: e.clientY });
       
@@ -27,51 +52,32 @@ const CyberCursor: React.FC = () => {
         clearTimeout(idleTimer);
       }
       
-      // 移動速度に応じてエフェクト発生確率を調整
-      if (distance > 10) {
-        // 速い動き: 高確率でエフェクト発生
-        if (Math.random() < 0.25) {
-          triggerLightningEffect();
-        }
-      } else if (distance > 0) {
-        // 遅い動き: 低確率でエフェクト発生
-        if (Math.random() < 0.03) {
-          triggerLightningEffect(true); // 小さめのエフェクト
-        }
+      // 速い動きでパルスエフェクト
+      if (distance > 20 && Math.random() < 0.3) {
+        triggerPulseEffect();
       }
       
-      // 静止状態が続いた場合も時々エフェクト発生（アイドル時エフェクト）
+      // 静止状態が続いた場合も時々エフェクト発生
       const newTimer = window.setTimeout(() => {
-        if (Math.random() < 0.4) { // 40%の確率で発生
-          triggerLightningEffect(true);
+        if (Math.random() < 0.4) {
+          triggerPulseEffect(true);
         }
-      }, 2000); // 2秒間動きがない場合
+      }, 2000);
       
       setIdleTimer(newTimer);
     };
 
-    // エフェクト発火関数を共通化
-    const triggerLightningEffect = (isSmall = false) => {
-      setShowLightning(true);
-      setLightningPattern(Math.floor(Math.random() * 5));
-      
-      // クリック時や特別な時は特殊効果
-      if (clicked || Math.random() < 0.3) {
-        setShowEnergyPulse(true);
-        setTimeout(() => {
-          setShowEnergyPulse(false);
-        }, isSmall ? 300 : 500);
-      }
-      
+    // エネルギーパルスエフェクト発火関数
+    const triggerPulseEffect = (isSmall = false) => {
+      setShowEnergyPulse(true);
       setTimeout(() => {
-        setShowLightning(false);
-      }, isSmall ? 150 : 250); // 小さいエフェクトは短く表示
+        setShowEnergyPulse(false);
+      }, isSmall ? 300 : 500);
     };
 
     const handleMouseDown = () => {
       setClicked(true);
-      // クリック時には必ず雷を出現
-      triggerLightningEffect();
+      triggerPulseEffect();
     };
     
     const handleMouseUp = () => setClicked(false);
@@ -81,7 +87,6 @@ const CyberCursor: React.FC = () => {
     window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
-      // クリーンアップ
       if (idleTimer) clearTimeout(idleTimer);
       window.removeEventListener('mousemove', updateMousePosition);
       window.removeEventListener('mousedown', handleMouseDown);
@@ -89,64 +94,64 @@ const CyberCursor: React.FC = () => {
     };
   }, [position, prevPosition, clicked, idleTimer]);
 
-  // getLightningPaths 関数は、小さめエフェクトをサポート
-  const getLightningPaths = useCallback(() => {
+  // テンタクルのパス生成
+  const generateTentaclePaths = useCallback(() => {
     const paths = [];
-    const directions = [
-      [1, 1], [1, -1], [-1, 1], [-1, -1], [0, 1], [1, 0], [-1, 0], [0, -1]
-    ];
+    const time = timeRef.current;
     
-    // メインの雷エフェクト - より複雑なパターン
-    let path = `M0,0 `;
-    let x = 0, y = 0;
-    const segments = 6 + Math.floor(Math.random() * 4); // 6-9のセグメント
-    
-    for (let i = 0; i < segments; i++) {
-      // より長い距離、よりジグザグに
-      const angle = (Math.random() * Math.PI * 2) / 3; // ランダムな方向へ
-      const length = 10 + Math.random() * 20;
-      const zigzag = (Math.random() > 0.5 ? -1 : 1) * (7 + Math.random() * 15);
+    // 複数のテンタクルを生成
+    for (let i = 0; i < tentacleCount; i++) {
+      // 各テンタクルの角度を計算（均等に分布）
+      const baseAngle = (i / tentacleCount) * Math.PI * 2;
+      // 時間経過で少しずつ回転
+      const angle = baseAngle + Math.sin(time * 0.5) * 0.2;
       
-      if (i % 2 === 0) {
-        x += Math.cos(angle) * length + zigzag;
-        y += Math.sin(angle) * length;
-      } else {
-        x += Math.cos(angle) * length;
-        y += Math.sin(angle) * length + zigzag;
-      }
-      path += `L${x},${y} `;
-    }
-    paths.push(path);
-    
-    // 分岐する雷1 - 必ず出現
-    let branch1X = x * 0.4, branch1Y = y * 0.4; // メインパスの途中から分岐
-    let branchPath1 = `M${branch1X},${branch1Y} `;
-    const branchDir1 = directions[Math.floor(Math.random() * directions.length)];
-    
-    for (let i = 0; i < 3; i++) {
-      const bAngle = Math.random() * Math.PI;
-      branch1X += Math.cos(bAngle) * (10 + Math.random() * 15);
-      branch1Y += Math.sin(bAngle) * (10 + Math.random() * 15);
-      branchPath1 += `L${branch1X},${branch1Y} `;
-    }
-    paths.push(branchPath1);
-    
-    // 分岐する雷2 - よりランダム
-    if (Math.random() > 0.3) {
-      let branch2X = x * 0.7, branch2Y = y * 0.7; // メインパスの別の位置から分岐
-      let branchPath2 = `M${branch2X},${branch2Y} `;
+      // テンタクルの長さ（クリック時は長く）
+      const length = tentacleLengthMin + 
+                    (clicked ? tentacleLengthMax * 1.5 : tentacleLengthMax) * 
+                    (0.6 + 0.4 * Math.sin(time * 2 + i * 0.7));
+                    
+      // 各テンタクルの制御点の数
+      const controlPoints = 4;
       
-      for (let i = 0; i < 2; i++) {
-        const bAngle = Math.random() * Math.PI * 1.5;
-        branch2X += Math.cos(bAngle) * (8 + Math.random() * 10);
-        branch2Y += Math.sin(bAngle) * (8 + Math.random() * 10);
-        branchPath2 += `L${branch2X},${branch2Y} `;
+      let path = `M0,0 `;
+      
+      // 各テンタクルは複数の制御点を持つ曲線で描く
+      for (let j = 1; j <= controlPoints; j++) {
+        // 各点の位置（距離）
+        const segmentLength = (j / controlPoints) * length;
+        
+        // うねうね動くための角度オフセット
+        const waveOffset = 
+          Math.sin(time * 3 + i * 0.5 + j * 0.8) * 0.5 * 
+          Math.min(1, j / 2); // 先端ほど大きくうねる
+        
+        // 各点の座標計算
+        const x = Math.cos(angle + waveOffset) * segmentLength;
+        const y = Math.sin(angle + waveOffset) * segmentLength;
+        
+        // 二次ベジェ曲線で滑らかに接続
+        if (j === 1) {
+          path += `Q${x * 0.5},${y * 0.5} ${x},${y} `;
+        } else {
+          const prevX = Math.cos(angle + Math.sin(time * 3 + i * 0.5 + (j-1) * 0.8) * 0.3 * Math.min(1, (j-1) / 2)) * 
+                       ((j-1) / controlPoints) * length;
+          const prevY = Math.sin(angle + Math.sin(time * 3 + i * 0.5 + (j-1) * 0.8) * 0.3 * Math.min(1, (j-1) / 2)) * 
+                       ((j-1) / controlPoints) * length;
+          
+          // 制御点を計算
+          const cpX = prevX + (x - prevX) * 0.5 + Math.sin(time * 2 + i * 1.5) * 10;
+          const cpY = prevY + (y - prevY) * 0.5 + Math.cos(time * 2 + i * 1.5) * 10;
+          
+          path += `Q${cpX},${cpY} ${x},${y} `;
+        }
       }
-      paths.push(branchPath2);
+      
+      paths.push(path);
     }
     
     return paths;
-  }, [lightningPattern, clicked]);
+  }, [forceRender, clicked]);
 
   return (
     <>
@@ -187,36 +192,36 @@ const CyberCursor: React.FC = () => {
         />
       )}
       
-      {/* 雷エフェクト */}
-      {showLightning && (
-        <svg 
-          className="lightning-effect" 
-          style={{ 
-            left: `${position.x}px`, 
-            top: `${position.y}px`,
-            position: 'fixed',
-            pointerEvents: 'none',
-            zIndex: 9996,
-            transform: 'translate(-50%, -50%)',
-          }}
-          width="200" 
-          height="200" 
-          viewBox="-100 -100 200 200"
-        >
-          {getLightningPaths().map((path, index) => (
-            <path
-              key={index}
-              d={path}
-              stroke={clicked ? "#ff8800" : "#ffeb3b"}
-              strokeWidth={index === 0 ? "3" : "2"}
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={`lightning-path lightning-path-${index}`}
-            />
-          ))}
-        </svg>
-      )}
+      {/* テンタクルエフェクト */}
+      <svg 
+        className="tentacle-effect" 
+        style={{ 
+          position: 'fixed',
+          pointerEvents: 'none',
+          zIndex: 9995,
+          left: `${position.x}px`, 
+          top: `${position.y}px`,
+          transform: 'translate(-50%, -50%)',
+        }}
+        width="300" 
+        height="300" 
+        viewBox="-150 -150 300 300"
+      >
+        {generateTentaclePaths().map((path, index) => (
+          <path
+            key={index}
+            d={path}
+            stroke={clicked 
+              ? `hsl(${40 + index * 4}, 100%, ${60 + index % 3 * 10}%)` 
+              : `hsl(${53 + index * 3}, 100%, ${50 + index % 3 * 10}%)`}
+            strokeWidth={3 - (index % 3) * 0.7}
+            fill="none"
+            strokeLinecap="round"
+            className={`tentacle-path tentacle-path-${index % 5}`}
+            opacity={0.7 - (index % tentacleCount) * 0.01}
+          />
+        ))}
+      </svg>
     </>
   );
 };

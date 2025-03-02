@@ -146,3 +146,58 @@
     opacity: 0.5;
   }
 }
+
+/* テンタクルエフェクト用のスタイル */
+.tentacle-effect {
+  filter: drop-shadow(0 0 8px rgba(255, 221, 0, 0.4));
+  mix-blend-mode: screen;
+}
+
+.tentacle-path {
+  transition: stroke 0.3s;
+  filter: blur(0.8px);
+}
+
+.tentacle-path-0 {
+  filter: drop-shadow(0 0 5px #ffeb3b);
+  animation: pulse-opacity 4s infinite ease-in-out;
+}
+
+.tentacle-path-1 {
+  animation: wiggle 8s infinite ease-in-out;
+}
+
+.tentacle-path-2 {
+  animation: wiggle 7s infinite ease-in-out;
+  animation-delay: -2s;
+}
+
+.tentacle-path-3 {
+  animation: pulse-opacity 6s infinite ease-in-out;
+  animation-delay: -1s;
+}
+
+.tentacle-path-4 {
+  animation: wiggle 9s infinite ease-in-out;
+  animation-delay: -3s;
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    stroke-dashoffset: 0;
+    filter: blur(0.5px);
+  }
+  50% {
+    stroke-dashoffset: 20;
+    filter: blur(1px);
+  }
+}
+
+@keyframes pulse-opacity {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
