@@ -23,7 +23,8 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
     updateCustomOrder,
     resetCustomOrder,
     defaultPageId,
-    setDefaultPage
+    setDefaultPage,
+    deleteMenuItem // Add this
   } = useMenuItems(isAuthenticated);
 
   // Handle drag end
@@ -77,6 +78,18 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
     setDefaultPage(pageId);
   }, [setDefaultPage]);
 
+  // Add handler for deleting menu items
+  const handleDeleteMenuItem = useCallback(async (pageId: string) => {
+    const success = await deleteMenuItem(pageId);
+    
+    // If the deleted item was the active menu, navigate to a safe page
+    if (success && pageId === activeMenu) {
+      onMenuClick('contact'); // Navigate to default fallback page
+    }
+    
+    return success;
+  }, [deleteMenuItem, activeMenu, onMenuClick]);
+
   // Spring animations
   const springs = useSprings(
     menuItems.length,
@@ -121,6 +134,7 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
             isAuthenticated={isAuthenticated}
             logout={handleLogout}
             onLoginClick={handleLoginClick}
+            onDeleteMenuItem={handleDeleteMenuItem} // Add this
           />
         )}
       </div>

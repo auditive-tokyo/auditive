@@ -142,10 +142,40 @@ export const useContent = () => {
     }
   };
 
+  const deleteContent = async (id: string) => {
+    try {
+      const result = await client.graphql({
+        query: `
+          mutation DeleteContent($input: DeleteContentInput!) {
+            deleteContent(input: $input) {
+              id
+            }
+          }
+        `,
+        variables: {
+          input: {
+            id
+          }
+        }
+      });
+
+      // Type guard to ensure result has data property
+      if ('data' in result) {
+        return result.data.deleteContent.id;
+      }
+
+      throw new Error('Invalid GraphQL result format');
+    } catch (error) {
+      console.error('Error deleting content:', error);
+      throw error;
+    }
+  };
+
   return {
     createContent,
     updateContent,
     getContent,
-    getAllContents
+    getAllContents,
+    deleteContent // Add this to the returned object
   };
 };

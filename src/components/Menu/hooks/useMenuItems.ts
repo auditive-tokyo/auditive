@@ -101,6 +101,37 @@ export const useMenuItems = (isAuthenticated: boolean) => {
     localStorage.setItem('defaultPage', pageId);
   };
 
+  // Add delete menu item function
+  const deleteMenuItem = async (pageId: string) => {
+    try {
+      const { deleteContent } = useContent();
+      
+      // If deleting the default page, reset to contact
+      if (pageId === defaultPageId) {
+        setDefaultPageId('contact');
+        localStorage.setItem('defaultPage', 'contact');
+      }
+      
+      // Delete from database
+      await deleteContent(pageId);
+      
+      // Remove from local state
+      setDynamicPages(prevPages => prevPages.filter(page => page.name !== pageId));
+      
+      // Update custom order if needed
+      if (customOrder.includes(pageId)) {
+        const newOrder = customOrder.filter(id => id !== pageId);
+        setCustomOrder(newOrder);
+        localStorage.setItem('menuOrder', JSON.stringify(newOrder));
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting menu item:', error);
+      return false;
+    }
+  };
+
   return {
     menuItems,
     orderedPublishedPages,
@@ -109,6 +140,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
     defaultPageId, // Expose the default page ID
     updateCustomOrder,
     resetCustomOrder,
-    setDefaultPage  // Expose the function to set default page
+    setDefaultPage,  // Expose the function to set default page
+    deleteMenuItem // Add this to the return object
   };
 };
