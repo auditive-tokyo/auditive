@@ -12,6 +12,8 @@ export interface MenuItem {
   isDynamic?: boolean;
   isDraft?: boolean;
   isSeparator?: boolean;
+  isParent?: boolean; // 親メニューかどうかを示すフラグ
+  children?: string[]; // 子メニューのIDリスト
 }
 
 export interface MenuProps {

@@ -45,8 +45,17 @@ export const useContent = () => {
     }
   };
 
-  const updateContent = async (id: string, content: string, status: string) => {
+  const updateContent = async (id: string, content: string, status: string, title?: string) => {
     try {
+      // まず既存のコンテンツを取得して、タイトルを保持する
+      let originalTitle = '';
+      try {
+        const existingContent = await getContent(id);
+        originalTitle = existingContent.title;
+      } catch (error) {
+        console.error('Could not fetch original content:', error);
+      }
+      
       const result = await client.graphql({
         query: `
           mutation UpdateContent($input: UpdateContentInput!) {
@@ -64,16 +73,16 @@ export const useContent = () => {
             id,
             content,
             status,
-            title: 'test title'
+            title: title || originalTitle // 引数でタイトルが指定されていればそれを使用、なければ元のタイトルを使用
           }
         }
       });
-
+  
       // Type guard to ensure result has data property
       if ('data' in result) {
         return result.data.updateContent as Content;
       }
-
+  
       throw new Error('Invalid GraphQL result format');
     } catch (error) {
       console.error('Detailed error:', JSON.stringify(error, null, 2));

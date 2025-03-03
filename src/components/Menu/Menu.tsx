@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useSprings } from 'react-spring';
 import { useAuth } from '../../auth/AuthContext';
 import { DropResult } from '@hello-pangea/dnd';
-import { MenuOption, MenuProps } from './types';
+import { MenuOption, MenuProps, MenuItem } from './types';
 import { useMenuItems } from './hooks/useMenuItems';
 import { MenuToggle } from './components/MenuToggle';
 import { MenuHeader } from './components/MenuHeader';
@@ -20,23 +20,38 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
   const {
     menuItems,
     orderedPublishedPages,
+    publishedPages, // publishedPagesもエクスポートする
     updateCustomOrder,
     resetCustomOrder,
     defaultPageId,
     setDefaultPage,
-    deleteMenuItem // Add this
+    deleteMenuItem,
+    addMenuItem,
+    addChildToParent,     // 新しい関数
+    removeChildFromParent // 新しい関数
   } = useMenuItems(isAuthenticated);
 
   // Handle drag end
   const handleDragEnd = useCallback((result: DropResult) => {
-    const { destination, source } = result;
+    const { destination, source, draggableId } = result;
     
-    if (!destination || 
-        (destination.droppableId === source.droppableId && 
-         destination.index === source.index)) {
+    // ドロップ先がない場合は何もしない
+    if (!destination) {
       return;
     }
-
+    
+    // 親メニューへのドラッグ＆ドロップは、ReorderMenu内で処理される
+    if (destination.droppableId.startsWith('parent-') || 
+        source.droppableId.startsWith('parent-')) {
+      return;
+    }
+    
+    // 通常のメニュー順序変更
+    if (destination.droppableId === source.droppableId && 
+        destination.index === source.index) {
+      return;
+    }
+    
     const items = [...orderedPublishedPages];
     const [removed] = items.splice(source.index, 1);
     items.splice(destination.index, 0, removed);
@@ -89,6 +104,54 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
     
     return success;
   }, [deleteMenuItem, activeMenu, onMenuClick]);
+  
+  // 親メニュー作成ハンドラを追加
+  const handleCreateParentMenu = useCallback(async (name: string): Promise<boolean> => {
+    try {
+      const newParentMenu: MenuItem = {
+        name: name.toLowerCase().replace(/\s+/g, '-'),
+        label: name,
+        isDynamic: true,
+        isParent: true,
+        children: []
+      };
+      
+      // addMenuItem関数を呼び出す
+      const success = await addMenuItem(newParentMenu);
+      return success;
+    } catch (error) {
+      console.error('Error creating parent menu:', error);
+      return false;
+    }
+  }, [addMenuItem]);
+
+  // 親メニューに子ページを追加するハンドラ
+  const handleAddChildToParent = useCallback(async (parentId: string, childId: string) => {
+    try {
+      const success = await addChildToParent(parentId, childId);
+      if (!success) {
+        alert('子ページの追加に失敗しました');
+      }
+      return success;
+    } catch (error) {
+      console.error('Error adding child to parent:', error);
+      return false;
+    }
+  }, [addChildToParent]);
+
+  // 親メニューから子ページを削除するハンドラ
+  const handleRemoveChildFromParent = useCallback(async (parentId: string, childId: string) => {
+    try {
+      const success = await removeChildFromParent(parentId, childId);
+      if (!success) {
+        alert('子ページの削除に失敗しました');
+      }
+      return success;
+    } catch (error) {
+      console.error('Error removing child from parent:', error);
+      return false;
+    }
+  }, [removeChildFromParent]);
 
   // Spring animations
   const springs = useSprings(
@@ -119,11 +182,14 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
         {isReorderMode ? (
           <ReorderMenu
             orderedPublishedPages={orderedPublishedPages}
+            publishedPages={publishedPages} // publishedPagesを渡す
             isAuthenticated={isAuthenticated}
             onDragEnd={handleDragEnd}
             onResetOrder={resetCustomOrder}
             defaultPageId={defaultPageId}
             onSetDefaultPage={handleSetDefaultPage}
+            onAddChildToParent={handleAddChildToParent}         // 新しいハンドラを渡す
+            onRemoveChildFromParent={handleRemoveChildFromParent} // 新しいハンドラを渡す
           />
         ) : (
           <NormalMenu
@@ -134,7 +200,8 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
             isAuthenticated={isAuthenticated}
             logout={handleLogout}
             onLoginClick={handleLoginClick}
-            onDeleteMenuItem={handleDeleteMenuItem} // Add this
+            onDeleteMenuItem={handleDeleteMenuItem}
+            onCreateParentMenu={handleCreateParentMenu} // 親メニュー作成ハンドラをpropsとして渡す
           />
         )}
       </div>

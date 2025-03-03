@@ -10,7 +10,8 @@ interface NormalMenuProps {
   isAuthenticated: boolean;
   logout: () => void;
   onLoginClick: () => void;
-  onDeleteMenuItem: (pageId: string) => Promise<boolean>; // Add this prop
+  onDeleteMenuItem: (pageId: string) => Promise<boolean>;
+  onCreateParentMenu?: (name: string) => Promise<boolean>; // 親メニュー作成用の関数を追加
 }
 
 export const NormalMenu: React.FC<NormalMenuProps> = ({
@@ -21,10 +22,14 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
   isAuthenticated,
   logout,
   onLoginClick,
-  onDeleteMenuItem
+  onDeleteMenuItem,
+  onCreateParentMenu
 }) => {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showParentMenuInput, setShowParentMenuInput] = useState(false);
+  const [parentMenuName, setParentMenuName] = useState('');
+  const [isCreatingParent, setIsCreatingParent] = useState(false);
   
   const handleDelete = async (e: React.MouseEvent, pageId: string) => {
     e.stopPropagation(); // Prevent menu click
@@ -42,6 +47,27 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
       alert('An error occurred while deleting the page');
     } finally {
       setIsDeleting(false);
+    }
+  };
+  
+  // 親メニュー作成処理ハンドラ
+  const handleCreateParentMenu = async () => {
+    if (!parentMenuName.trim() || !onCreateParentMenu) return;
+    
+    setIsCreatingParent(true);
+    try {
+      const success = await onCreateParentMenu(parentMenuName);
+      if (success) {
+        setParentMenuName('');
+        setShowParentMenuInput(false);
+      } else {
+        alert('Failed to create parent menu');
+      }
+    } catch (error) {
+      console.error('Error creating parent menu:', error);
+      alert('An error occurred while creating the parent menu');
+    } finally {
+      setIsCreatingParent(false);
     }
   };
   
@@ -116,6 +142,49 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
           )}
         </AnimatedLi>
       ))}
+      
+      {/* 親メニュー作成UI */}
+      {isAuthenticated && (
+        <li className="mt-4">
+          {showParentMenuInput ? (
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                value={parentMenuName}
+                onChange={(e) => setParentMenuName(e.target.value)}
+                placeholder="親メニュー名"
+                className="px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded focus:border-cyan-500 focus:outline-none"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCreateParentMenu}
+                  disabled={isCreatingParent || !parentMenuName.trim()}
+                  className="px-3 py-1 bg-cyan-600 text-white rounded hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                >
+                  {isCreatingParent ? '作成中...' : '作成'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowParentMenuInput(false);
+                    setParentMenuName('');
+                  }}
+                  className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowParentMenuInput(true)}
+              className="px-4 py-2 text-cyan-500 hover:text-cyan-400 transition-colors"
+            >
+              親メニューを作成
+            </button>
+          )}
+        </li>
+      )}
+      
       {/* Login/Logout button */}
       <li className="mt-8">
         {isAuthenticated ? (
