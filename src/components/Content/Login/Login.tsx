@@ -12,6 +12,10 @@ const Login: React.FC = () => {
       const success = await login(apiKey);
       if (!success) {
         setError('Invalid API key');
+      } else {
+        // ログイン成功時にデフォルトページに移動
+        const defaultPage = localStorage.getItem('defaultPage');
+        window.location.hash = defaultPage; // フォールバックなし
       }
     } catch (error) {
       setError('An error occurred during login');
