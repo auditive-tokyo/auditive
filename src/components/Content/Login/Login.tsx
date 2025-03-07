@@ -36,7 +36,7 @@ const Login: React.FC = () => {
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Enter API Key"
+            placeholder="Enter Your Pass Baby!!!"
             className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-cyan-500"
             required
           />

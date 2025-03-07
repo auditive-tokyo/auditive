@@ -11,6 +11,10 @@ const CyberCursor: React.FC = () => {
   const isMovingRef = useRef(false);
   const velocityRef = useRef(0);
   const lastPositionRef = useRef({ x: 0, y: 0 });
+  // 動き状態の遷移を追跡 (0=停止、1=動いている)
+  const transitionStateRef = useRef(0);
+  // 最後の動き検知時間
+  const lastMovementTimeRef = useRef(0);
   
   // 蜘蛛の足の本数
   const legCount = 8;
@@ -23,9 +27,11 @@ const CyberCursor: React.FC = () => {
   // 蜘蛛の体のサイズ
   const bodySize = 10;
   
-  // SVGサイズ設定
-  const svgSize = 150; // 固定サイズに変更
-
+  // SVGサイズ設定 - 基本サイズと動作時サイズ
+  const baseSize = 100; // 停止時のSVGサイズ
+  const activeSize = 150; // 動作時のSVGサイズ
+  const svgSize = 150; 
+  
   // 蜘蛛の"追従"遅延用の位置
   const targetPositionRef = useRef({ x: 0, y: 0 });
   const spiderPositionRef = useRef({ x: 0, y: 0 });
@@ -33,6 +39,7 @@ const CyberCursor: React.FC = () => {
   // アニメーションループ
   const updateAnimation = useCallback(() => {
     timeRef.current += 0.01;
+    const currentTime = performance.now();
     
     // 蜘蛛の位置をターゲット(マウス)位置に遅延追従させる
     const targetPos = targetPositionRef.current;
@@ -47,10 +54,26 @@ const CyberCursor: React.FC = () => {
     const distance = Math.sqrt(dx * dx + dy * dy);
     
     // 動いているか判定
-    isMovingRef.current = distance > 1;
+    const isMoving = distance > 1;
+    isMovingRef.current = isMoving;
     
     // 速度を更新（距離に応じて）
     velocityRef.current = Math.min(1, distance / 40);
+    
+    // 動き状態の遷移更新
+    if (isMoving) {
+      lastMovementTimeRef.current = currentTime;
+      // 徐々に遷移状態を1に近づける (動いている状態)
+      transitionStateRef.current = Math.min(1, transitionStateRef.current + 0.02);
+    } else {
+      // 最後の動きから一定時間経過したら遷移状態を0に戻す (停止状態)
+      const timeSinceLastMovement = currentTime - lastMovementTimeRef.current;
+      
+      if (timeSinceLastMovement > 100) { // 300ms以上動きがなければ停止と判断
+        // ゆっくりと遷移状態を0に近づける
+        transitionStateRef.current = Math.max(0, transitionStateRef.current - 0.1);
+      }
+    }
     
     if (distance > 0.1) {
       // マウスに向かって移動
@@ -102,12 +125,17 @@ const CyberCursor: React.FC = () => {
       const dy = newPosition.y - lastPos.y;
       const moveDistance = Math.sqrt(dx * dx + dy * dy);
       
-      if (moveDistance > 25 && Math.random() < 0.3) {
+      // パルス発火閾値を調整
+      if (moveDistance > 25 && Math.random() < 0.2) {
         triggerPulseEffect();
       }
       
       // 最後の位置を更新
       lastPositionRef.current = newPosition;
+      // 動き検出時に最終移動時間を更新
+      if (moveDistance > 0.5) {
+        lastMovementTimeRef.current = performance.now();
+      }
     };
 
     // エネルギーパルスエフェクト発火関数
@@ -147,9 +175,14 @@ const CyberCursor: React.FC = () => {
     const isMoving = isMovingRef.current;
     const moveIntensity = Math.min(1, velocity * 1.5);
     
+    // 遷移状態を使って脚の長さを調整
+    const transitionState = transitionStateRef.current;
+    
     // 脚の長さの基本値と最大値
-    const baseLegLength = 25;
-    const maxLegLengthBonus = 20;
+    const minLegLength = 15;  // 停止時の脚の長さ
+    const maxLegLength = 25;  // 動作時の脚の長さ
+    const baseLegLength = minLegLength + (maxLegLength - minLegLength) * transitionState;
+    const maxLegLengthBonus = 15 * transitionState;  // 動作時のみボーナス長を追加
     
     // クリック時は脚を短くする
     const clickModifier = clicked ? 0.7 : 1;
@@ -165,7 +198,7 @@ const CyberCursor: React.FC = () => {
         // 進行方向に応じて基本角度をシフト (脚を進行方向に向ける)
         const moveAngle = Math.atan2(direction.y, direction.x);
         // 進行方向への配置調整の強度
-        const directionBias = 0.5 * moveIntensity;
+        const directionBias = 0.5 * moveIntensity * transitionState;
         
         // 基本角度と進行方向を加重平均
         baseAngle = baseAngle * (1 - directionBias) + 
@@ -175,14 +208,14 @@ const CyberCursor: React.FC = () => {
       // 時間経過でわずかに揺らす (脚の動き)
       const phase = isMoving ? time * 5 : time;
       const legWave = isMoving ? 
-        Math.sin(phase + i * Math.PI * 0.25) * 0.3 * moveIntensity : 
+        Math.sin(phase + i * Math.PI * 0.25) * 0.3 * moveIntensity * transitionState : 
         Math.sin(phase + i * Math.PI * 0.5) * 0.1;
       
       const angle = baseAngle + legWave;
       
       // 脚の長さ - 動きに応じて変化
       const legLengthMultiplier = 1 + 
-        (isMoving ? Math.sin(phase * 0.5 + i * Math.PI) * 0.3 * moveIntensity : 0);
+        (isMoving ? Math.sin(phase * 0.5 + i * Math.PI) * 0.3 * moveIntensity * transitionState : 0);
       
       // 左右の脚で長さを少し変える
       const lengthVariation = i % 2 === 0 ? 1.1 : 0.9;
@@ -198,7 +231,7 @@ const CyberCursor: React.FC = () => {
       
       // 第2関節 (先端) - より動きのある角度
       const joint2Angle = angle + (isMoving ? 
-        Math.sin(phase * 2 + i) * 0.6 * moveIntensity : 
+        Math.sin(phase * 2 + i) * 0.6 * moveIntensity * transitionState : 
         Math.sin(time + i * 0.7) * 0.2);
       
       const joint2Length = legLength * 0.7;
@@ -217,6 +250,11 @@ const CyberCursor: React.FC = () => {
   const spiderPos = spiderPositionRef.current;
   const centerX = spiderPos.x;
   const centerY = spiderPos.y;
+
+  // 遷移状態に基づくSVGのサイズと不透明度の計算
+  const transitionState = transitionStateRef.current;
+  const currentSize = baseSize + (activeSize - baseSize) * transitionState;
+  const currentOpacity = 0.4 + 0.6 * transitionState; // 0.4～1.0の間で不透明度変化
 
   return (
     <>
@@ -262,10 +300,12 @@ const CyberCursor: React.FC = () => {
           left: `${centerX}px`, 
           top: `${centerY}px`,
           transform: 'translate(-50%, -50%)',
-          filter: 'drop-shadow(0 0 3px rgba(0, 255, 255, 0.7))'
+          filter: 'drop-shadow(0 0 3px rgba(0, 255, 255, 0.7))',
+          opacity: currentOpacity, // 動作状態に応じて不透明度を変化
+          transition: 'opacity 0.2s ease' // 不透明度の変化を滑らかに
         }}
-        width={svgSize}
-        height={svgSize}
+        width={currentSize}
+        height={currentSize}
         viewBox={`-${svgSize/2} -${svgSize/2} ${svgSize} ${svgSize}`}
       >
         <defs>
@@ -297,7 +337,7 @@ const CyberCursor: React.FC = () => {
             key={index}
             d={path}
             stroke={clicked ? "url(#leg-gradient-active)" : "url(#leg-gradient)"}
-            strokeWidth={1.5}
+            strokeWidth={1 + 0.5 * transitionState} // 停止時は細く
             strokeLinecap="round"
             fill="none"
             filter="url(#glow)"
@@ -309,7 +349,7 @@ const CyberCursor: React.FC = () => {
         <circle
           cx="0"
           cy="0"
-          r={bodySize * (clicked ? 1.2 : 1)}
+          r={bodySize * (clicked ? 1.2 : 1) * (0.8 + 0.2 * transitionState)} // 停止時は小さく
           fill={clicked ? "rgba(255, 165, 0, 0.8)" : "rgba(0, 210, 210, 0.8)"}
           filter="url(#glow)"
           className="spider-body"
@@ -319,7 +359,7 @@ const CyberCursor: React.FC = () => {
         <circle
           cx="0"
           cy="0"
-          r={bodySize * 0.4}
+          r={bodySize * 0.4 * (0.8 + 0.2 * transitionState)} // 停止時は小さく
           fill={clicked ? "rgba(255, 220, 150, 0.9)" : "rgba(150, 255, 255, 0.9)"}
           className="spider-core"
         />
