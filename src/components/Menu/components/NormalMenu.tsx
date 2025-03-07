@@ -6,12 +6,14 @@ interface NormalMenuProps {
   menuItems: MenuItem[];
   springs: any[];
   activeMenu: MenuOption;
-  handleMenuClick: (menu: MenuOption) => void;
+  handleMenuClick: (menu: MenuOption, isParent?: boolean) => void; // 第2引数を追加
   isAuthenticated: boolean;
   logout: () => void;
   onLoginClick: () => void;
   onDeleteMenuItem: (pageId: string) => Promise<boolean>;
-  onCreateParentMenu?: (name: string) => Promise<boolean>; // 親メニュー作成用の関数を追加
+  onCreateParentMenu?: (name: string) => Promise<boolean>;
+  expandedParents: Set<string>;
+  publishedPages: MenuItem[];
 }
 
 export const NormalMenu: React.FC<NormalMenuProps> = ({
@@ -23,7 +25,9 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
   logout,
   onLoginClick,
   onDeleteMenuItem,
-  onCreateParentMenu
+  onCreateParentMenu,
+  expandedParents, // ここに追加
+  publishedPages    // ここに追加
 }) => {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -74,73 +78,104 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
   return (
     <ul className="h-full flex flex-col items-start pl-12 gap-4 pt-[120px]">
       {menuItems.map((item, index) => (
-        <AnimatedLi
-          key={item.name}
-          onClick={item.isSeparator ? undefined : () => handleMenuClick(item.name)}
-          className={`
-            relative px-4 py-2 
-            text-menu
-            ${!item.isSeparator ? 'cursor-pointer' : 'cursor-default'}
-            ${item.isDynamic ? 'text-gray-300' : ''}
-            ${item.isDraft && !item.isSeparator ? 'text-amber-400' : ''}
-            ${item.isSeparator ? 'text-gray-500 text-sm font-bold' : ''}
-            before:absolute before:left-0 before:bottom-0
-            before:w-full before:h-[1px]
-            before:bg-cyan-400
-            before:transform before:scale-x-0
-            before:transition-transform before:duration-300
-            ${!item.isSeparator ? 'hover:before:scale-x-100' : ''}
-            ${activeMenu === item.name && !item.isSeparator ? 'before:scale-x-100' : ''}
-            group
-          `}
-          style={springs[index]}
-        >
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center">
-              {/* 削除ボタンをここに移動 - ラベルの左側に配置 */}
-              {isAuthenticated && item.isDynamic && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setConfirmDelete(item.name);
-                  }}
-                  className="opacity-0 group-hover:opacity-100 mr-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs transition-opacity"
-                  aria-label={`Delete ${item.label}`}
-                >
-                  ✕
-                </button>
-              )}
-              <span>{item.label}</span>
-            </div>
-            
-            {/* 元々あった削除ボタンの位置は空にする */}
-          </div>
-          
-          {/* Delete confirmation dialog */}
-          {confirmDelete === item.name && (
-            <div className="absolute left-full ml-2 top-0 bg-gray-800 p-3 rounded shadow-lg z-10 w-[200px]">
-              <p className="text-sm mb-2">Delete "{item.label}"?</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={(e) => handleDelete(e, item.name)}
-                  disabled={isDeleting}
-                  className="px-2 py-1 bg-red-500 text-white text-xs rounded"
-                >
-                  {isDeleting ? 'Deleting...' : 'Yes, delete'}
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setConfirmDelete(null);
-                  }}
-                  className="px-2 py-1 bg-gray-600 text-white text-xs rounded"
-                >
-                  Cancel
-                </button>
+        <React.Fragment key={item.name}>
+          <AnimatedLi
+            onClick={item.isSeparator ? undefined : () => handleMenuClick(item.name, item.isParent)}
+            className={`
+              relative px-4 py-2 
+              text-menu
+              ${!item.isSeparator ? 'cursor-pointer' : 'cursor-default'}
+              ${item.isDynamic ? 'text-gray-300' : ''}
+              ${item.isDraft && !item.isSeparator ? 'text-amber-400' : ''}
+              ${item.isSeparator ? 'text-gray-500 text-sm font-bold' : ''}
+              before:absolute before:left-0 before:bottom-0
+              before:w-full before:h-[1px]
+              before:bg-cyan-400
+              before:transform before:scale-x-0
+              before:transition-transform before:duration-300
+              ${!item.isSeparator ? 'hover:before:scale-x-100' : ''}
+              ${activeMenu === item.name && !item.isSeparator ? 'before:scale-x-100' : ''}
+              group
+            `}
+            style={springs[index]}
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center">
+                {/* 親メニュー項目の場合、展開/折りたたみアイコンを表示 */}
+                {item.isParent && (
+                  <span className="mr-2 text-gray-400 transform transition-transform">
+                    {expandedParents.has(item.name) ? '▼' : '►'}
+                  </span>
+                )}
+                
+                {isAuthenticated && item.isDynamic && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmDelete(item.name);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 mr-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs transition-opacity"
+                    aria-label={`Delete ${item.label}`}
+                  >
+                    ✕
+                  </button>
+                )}
+                <span>{item.label}</span>
               </div>
             </div>
+            
+            {/* Delete confirmation dialog */}
+            {confirmDelete === item.name && (
+              <div className="absolute left-full ml-2 top-0 bg-gray-800 p-3 rounded shadow-lg z-10 w-[200px]">
+                <p className="text-sm mb-2">Delete "{item.label}"?</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={(e) => handleDelete(e, item.name)}
+                    disabled={isDeleting}
+                    className="px-2 py-1 bg-red-500 text-white text-xs rounded"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Yes, delete'}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmDelete(null);
+                    }}
+                    className="px-2 py-1 bg-gray-600 text-white text-xs rounded"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </AnimatedLi>
+          
+          {/* 親メニューが展開されている場合、子メニュー項目を表示 */}
+          {item.isParent && item.children && expandedParents.has(item.name) && (
+            <div className="ml-10 border-l-2 border-purple-500/30 pl-2 space-y-2">
+              {item.children.map(childId => {
+                const childItem = publishedPages.find(p => p.name === childId);
+                if (!childItem) return null;
+                
+                return (
+                  <li
+                    key={childId}
+                    onClick={() => handleMenuClick(childId)}
+                    className={`
+                      px-4 py-2 text-menu
+                      cursor-pointer
+                      text-gray-300 hover:text-white
+                      ${activeMenu === childId ? 'text-cyan-400' : ''}
+                      transition-colors duration-200
+                    `}
+                  >
+                    {childItem.label}
+                  </li>
+                );
+              })}
+            </div>
           )}
-        </AnimatedLi>
+        </React.Fragment>
       ))}
       
       {/* 親メニュー作成UI */}

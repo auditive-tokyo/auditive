@@ -15,6 +15,7 @@ export type { MenuOption } from './types';
 export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isReorderMode, setIsReorderMode] = useState(false);
+  const [expandedParents, setExpandedParents] = useState<Set<string>>(new Set());
   const { isAuthenticated, logout } = useAuth();
   
   const {
@@ -30,6 +31,19 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
     addChildToParent,     // 新しい関数
     removeChildFromParent // 新しい関数
   } = useMenuItems(isAuthenticated);
+
+  // 親メニューの展開/折りたたみを切り替える関数
+  const toggleParentExpansion = useCallback((parentId: string) => {
+    setExpandedParents(prevExpanded => {
+      const newSet = new Set(prevExpanded);
+      if (newSet.has(parentId)) {
+        newSet.delete(parentId);
+      } else {
+        newSet.add(parentId);
+      }
+      return newSet;
+    });
+  }, []);
 
   // Handle drag end
   const handleDragEnd = useCallback((result: DropResult) => {
@@ -61,12 +75,17 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
   }, [orderedPublishedPages, updateCustomOrder]);
 
   // Menu item click handler
-  const handleMenuClick = useCallback((menu: MenuOption) => {
-    if (!isReorderMode) {
+  const handleMenuClick = useCallback((menu: MenuOption, isParent: boolean = false) => {
+    if (isReorderMode) return;
+    
+    // 親メニューの場合は展開/折りたたみを切り替える
+    if (isParent) {
+      toggleParentExpansion(menu);
+    } else {
       onMenuClick(menu);
       setIsOpen(false);
     }
-  }, [isReorderMode, onMenuClick]);
+  }, [isReorderMode, onMenuClick, toggleParentExpansion]);
 
   // Toggle reorder mode
   const toggleReorderMode = useCallback(() => {
@@ -202,6 +221,8 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
             onLoginClick={handleLoginClick}
             onDeleteMenuItem={handleDeleteMenuItem}
             onCreateParentMenu={handleCreateParentMenu} // 親メニュー作成ハンドラをpropsとして渡す
+            expandedParents={expandedParents} // 展開状態を渡す
+            publishedPages={publishedPages} // 全ての公開ページ情報を渡す
           />
         )}
       </div>
