@@ -201,3 +201,44 @@
     opacity: 0.9;
   }
 }
+
+/* 既存のスタイルを上書きするための新しいスタイル */
+
+.energy-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 15px 5px rgba(0, 255, 255, 0.6);
+  animation: pulse 0.4s ease-out;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0.8;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(5);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(8);
+    opacity: 0;
+  }
+}
+
+/* サイバースパイダーの脚のアニメーション */
+.spider-leg {
+  transition: stroke-width 0.2s ease;
+}
+
+/* クリック時の体のアニメーション */
+.spider-body {
+  transition: r 0.2s ease, fill 0.2s ease;
+}
+
+.spider-core {
+  transition: fill 0.2s ease;
+}
