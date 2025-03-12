@@ -87,7 +87,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
                               ? 'border-amber-500' 
                               : 'border-cyan-500'
                           }
-                          text-white w-[70%] flex flex-col
+                          text-white w-[90%] flex flex-col
                         `}
                         data-id={item.name}
                         onClick={() => setSelectedItemId(item.name === selectedItemId ? null : item.name)}
