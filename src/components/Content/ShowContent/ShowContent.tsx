@@ -4,6 +4,8 @@ import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { useContent } from '../../../hooks/useContent';
 import { Content } from '../../../types/content';
+import { useAuth } from '../../../auth/AuthContext';
+import EditContent from '../EditContent/EditContent'; // 新しく作成する編集用コンポーネント
 
 interface ShowContentProps {
   id: string;
@@ -12,7 +14,9 @@ interface ShowContentProps {
 const ShowContent: React.FC<ShowContentProps> = ({ id }) => {
   const [content, setContent] = useState<Content | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false); // 編集モードの状態管理
   const { getContent } = useContent();
+  const { isAuthenticated } = useAuth(); // 認証状態を取得
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -27,7 +31,18 @@ const ShowContent: React.FC<ShowContentProps> = ({ id }) => {
     };
 
     fetchContent();
-  }, [id]);
+  }, [id, getContent]);
+
+  // 編集モードの切り替え
+  const toggleEditMode = () => {
+    setIsEditing(!isEditing);
+  };
+
+  // 編集完了後のコールバック
+  const handleEditComplete = (updatedContent: Content) => {
+    setContent(updatedContent);
+    setIsEditing(false);
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -37,9 +52,26 @@ const ShowContent: React.FC<ShowContentProps> = ({ id }) => {
     return <div>Content not found</div>;
   }
 
+  // 編集モードの場合は編集フォームを表示
+  if (isEditing) {
+    return <EditContent content={content} onComplete={handleEditComplete} onCancel={() => setIsEditing(false)} />;
+  }
+
   return (
     <div className="p-5 bg-black/50 rounded-lg">
-      <h1 className="text-2xl mb-4 text-white">{content.title}</h1>
+      <div className="flex justify-between items-start mb-4">
+        <h1 className="text-2xl text-white">{content.title}</h1>
+        {/* 認証済みの場合のみ編集ボタンを表示 */}
+        {isAuthenticated && (
+          <button 
+            onClick={toggleEditMode}
+            className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-500 transition-colors"
+          >
+            Edit
+          </button>
+        )}
+      </div>
+      
       <div className="prose prose-invert max-w-none">
         <ReactMarkdown
           rehypePlugins={[rehypeRaw]}
