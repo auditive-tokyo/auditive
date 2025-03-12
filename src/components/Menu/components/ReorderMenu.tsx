@@ -54,7 +54,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
   };
   
   return (
-    <div className="h-full pt-[120px] pb-20 overflow-y-auto">
+    <div className="h-full pt-[80px] pb-20 overflow-y-auto">
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="menu-items">
           {(provided, snapshot) => (
