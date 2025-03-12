@@ -109,14 +109,14 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
                 )}
                 <span>{item.label}</span>
               </div>
-              
+
               {isAuthenticated && item.isDynamic && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setConfirmDelete(item.name);
                   }}
-                  className="opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs transition-opacity"
+                  className="opacity-0 group-hover:opacity-100 w-5 h-5 ml-1 flex items-center justify-center rounded-full bg-red-500 text-white text-xs transition-opacity"
                   aria-label={`Delete ${item.label}`}
                 >
                   ✕
@@ -167,9 +167,53 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
                       text-gray-300 hover:text-white
                       ${activeMenu === childId ? 'text-cyan-400' : ''}
                       transition-colors duration-200
+                      group relative
                     `}
                   >
-                    {childItem.label}
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <span>{childItem.label}</span>
+                      </div>
+                      
+                      {/* 子ページの削除ボタン */}
+                      {isAuthenticated && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDelete(childId);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 w-5 h-5 ml-1 flex items-center justify-center rounded-full bg-red-500 text-white text-xs transition-opacity"
+                          aria-label={`Delete ${childItem.label}`}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* 削除確認ダイアログ (子ページ用) */}
+                    {confirmDelete === childId && (
+                      <div className="absolute left-full ml-2 top-0 bg-gray-800 p-3 rounded shadow-lg z-10 w-[200px]">
+                        <p className="text-sm mb-2">Delete "{childItem.label}"?</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => handleDelete(e, childId)}
+                            disabled={isDeleting}
+                            className="px-2 py-1 bg-red-500 text-white text-xs rounded"
+                          >
+                            {isDeleting ? 'Deleting...' : 'Yes, delete'}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmDelete(null);
+                            }}
+                            className="px-2 py-1 bg-gray-600 text-white text-xs rounded"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </li>
                 );
               })}

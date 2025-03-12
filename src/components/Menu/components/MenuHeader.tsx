@@ -36,15 +36,6 @@ export const MenuHeader: React.FC<MenuHeaderProps> = ({
           {isReorderMode ? 'Exit Reorder Mode' : 'Reorder Menu'}
         </button>
       )}
-
-      {/* Instructions for reorder mode */}
-      {/* {isReorderMode && (
-        <div className="absolute top-20 left-6 right-6 bg-gray-800/80 p-3 rounded text-sm text-gray-300">
-          Drag and drop the published pages to reorder them in the menu.
-          <br />
-          Changes are saved automatically.
-        </div>
-      )} */}
     </>
   );
 };
