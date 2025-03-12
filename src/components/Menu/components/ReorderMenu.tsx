@@ -105,9 +105,6 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
                             ) : (
                               <span>{item.label}</span>
                             )}
-                            {!item.isParent && item.name === defaultPageId && (
-                              <span className="ml-2 text-amber-500 text-xs font-bold">(DEFAULT)</span>
-                            )}
                           </div>
                           
                           {/* 親メニューでなければデフォルト設定ボタンを表示 */}

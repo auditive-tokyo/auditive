@@ -107,21 +107,21 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
                     {expandedParents.has(item.name) ? '▼' : '►'}
                   </span>
                 )}
-                
-                {isAuthenticated && item.isDynamic && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setConfirmDelete(item.name);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 mr-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs transition-opacity"
-                    aria-label={`Delete ${item.label}`}
-                  >
-                    ✕
-                  </button>
-                )}
                 <span>{item.label}</span>
               </div>
+              
+              {isAuthenticated && item.isDynamic && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDelete(item.name);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs transition-opacity"
+                  aria-label={`Delete ${item.label}`}
+                >
+                  ✕
+                </button>
+              )}
             </div>
             
             {/* Delete confirmation dialog */}
