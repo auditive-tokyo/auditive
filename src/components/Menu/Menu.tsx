@@ -204,7 +204,6 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
             publishedPages={publishedPages} // publishedPagesを渡す
             isAuthenticated={isAuthenticated}
             onDragEnd={handleDragEnd}
-            onResetOrder={resetCustomOrder}
             defaultPageId={defaultPageId}
             onSetDefaultPage={handleSetDefaultPage}
             onAddChildToParent={handleAddChildToParent}         // 新しいハンドラを渡す

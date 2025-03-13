@@ -4,10 +4,9 @@ import { MenuItem } from '../types';
 
 interface ReorderMenuProps {
   orderedPublishedPages: MenuItem[];
-  publishedPages: MenuItem[]; // 新しいpropsを追加
+  publishedPages: MenuItem[];
   isAuthenticated: boolean;
   onDragEnd: (result: DropResult) => void;
-  onResetOrder: () => void;
   defaultPageId: string;
   onSetDefaultPage: (pageId: string) => void;
   onAddChildToParent?: (parentId: string, childId: string) => Promise<boolean>;
@@ -16,10 +15,9 @@ interface ReorderMenuProps {
 
 export const ReorderMenu: React.FC<ReorderMenuProps> = ({
   orderedPublishedPages,
-  publishedPages, // 新しいpropsを受け取る
+  publishedPages,
   isAuthenticated,
   onDragEnd,
-  onResetOrder,
   defaultPageId,
   onSetDefaultPage,
   onAddChildToParent,
@@ -244,12 +242,6 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
               )}
               
               <li className="mt-8 flex gap-2">
-                <button
-                  onClick={onResetOrder}
-                  className="px-4 py-2 bg-red-500/50 text-white hover:bg-red-500 rounded transition-colors"
-                >
-                  Reset Menu Order
-                </button>
                 {selectedItemId && (
                   <button
                     onClick={() => setSelectedItemId(null)}
