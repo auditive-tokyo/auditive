@@ -58,7 +58,7 @@ const ShowContent: React.FC<ShowContentProps> = ({ id }) => {
   }
 
   return (
-    <div className="p-5 bg-black/50 rounded-lg">
+    <div className="content-wrapper">
       <div className="flex justify-between items-start mb-4">
         <h1 className="text-2xl text-white">{content.title}</h1>
         {/* 認証済みの場合のみ編集ボタンを表示 */}

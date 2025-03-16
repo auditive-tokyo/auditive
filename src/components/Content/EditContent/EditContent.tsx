@@ -61,7 +61,7 @@ const EditContent: React.FC<EditContentProps> = ({ content, onComplete, onCancel
   };
 
   return (
-    <div className="p-5 bg-black/50 rounded-lg">
+    <div className="content-wrapper">
       <h2 className="text-2xl mb-4 text-white">Edit Page</h2>
       <div className="flex gap-4 mb-4">
         <button

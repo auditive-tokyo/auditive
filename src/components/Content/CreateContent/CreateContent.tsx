@@ -37,7 +37,7 @@ const CreateContent: React.FC = () => {
   };
 
   return (
-    <div className="p-5 bg-black/50 rounded-lg">
+    <div className="content-wrapper">
       <h2 className="text-2xl mb-4 text-black">Create New Page</h2>
       <div className="flex gap-4 mb-4">
         <button

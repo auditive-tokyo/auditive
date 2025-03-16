@@ -11,7 +11,7 @@
 }
 
 .content-wrapper {
-  @apply text-white bg-black/50 w-full max-w-[1000px];
+  @apply text-white w-full max-w-[1000px];
 }
 
 .description-text {
