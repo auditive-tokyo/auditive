@@ -34,7 +34,9 @@ const Content: React.FC<ContentProps> = ({ activeMenu }) => {
 
   return (
     <div className="content-container">
-      <div className="content-wrapper">
+      <div className={`text-white w-full max-w-[1000px] ${
+        activeMenu !== 'contact' ? 'bg-black/50' : ''
+      }`}>
         {renderContent()}
       </div>
     </div>

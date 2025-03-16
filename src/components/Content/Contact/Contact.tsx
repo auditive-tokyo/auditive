@@ -42,14 +42,14 @@ const Contact: React.FC = () => {
   };
 
   return (
-    <div className="p-5 bg-gray-100 rounded-lg shadow sm:p-4">
-      <h2 className="text-center text-gray-800 mb-5">Contact</h2>
-      <p className="text-center text-gray-600 mb-5 text-base">
+    <div className="p-5 rounded-lg"> {/* 背景色を削除 */}
+      <h1 className="text-2xl text-white mb-4">Contact</h1>
+      <p className="text-base text-gray-300 mb-6">
         Contact us for collab, booking, or just to say hi!
       </p>
       <form onSubmit={handleSubmit} className="flex flex-col">
         <div className="mb-4">
-          <label htmlFor="name" className="block mb-1 text-gray-700 font-bold">
+          <label htmlFor="name" className="block mb-1 text-white">
             Name:
           </label>
           <input
@@ -59,11 +59,11 @@ const Contact: React.FC = () => {
             onChange={(e) => setName(e.target.value)}
             required
             disabled={isLoading}
-            className="w-full p-2.5 border border-gray-300 rounded text-base"
+            className="w-full p-2.5 bg-transparent border border-gray-600 focus:border-cyan-500 text-white rounded text-base outline-none transition-colors"
           />
         </div>
         <div className="mb-4">
-          <label htmlFor="email" className="block mb-1 text-gray-700 font-bold">
+          <label htmlFor="email" className="block mb-1 text-white">
             Email:
           </label>
           <input
@@ -73,11 +73,11 @@ const Contact: React.FC = () => {
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={isLoading}
-            className="w-full p-2.5 border border-gray-300 rounded text-base"
+            className="w-full p-2.5 bg-transparent border border-gray-600 focus:border-cyan-500 text-white rounded text-base outline-none transition-colors"
           />
         </div>
         <div className="mb-4">
-          <label htmlFor="message" className="block mb-1 text-gray-700 font-bold">
+          <label htmlFor="message" className="block mb-1 text-white">
             Message:
           </label>
           <textarea
@@ -86,13 +86,13 @@ const Contact: React.FC = () => {
             onChange={(e) => setMessage(e.target.value)}
             required
             disabled={isLoading}
-            className="w-full p-2.5 border border-gray-300 rounded text-base h-[150px] resize-y"
+            className="w-full p-2.5 bg-transparent border border-gray-600 focus:border-cyan-500 text-white rounded text-base h-[150px] resize-y outline-none transition-colors"
           ></textarea>
         </div>
         <button
           type="submit"
           disabled={isLoading}
-          className="flex items-center justify-center min-w-[120px] mx-auto py-3 px-5 bg-blue-600 text-white rounded-md text-base transition-colors duration-300 ease-in-out hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="flex items-center justify-center min-w-[120px] mx-auto py-3 px-5 bg-cyan-600 text-white rounded-md text-base transition-colors hover:bg-cyan-500 disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
         >
           {isLoading ? 'Sending...' : 'Send'}
           {isLoading && (

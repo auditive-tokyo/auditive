@@ -219,7 +219,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
               </li>
               <li className={`opacity-75 px-4 py-2 text-gray-300 flex items-center justify-between border-l-4 ${defaultPageId === 'contact' ? 'border-amber-500' : 'border-gray-600'}`}>
                 <div className="flex items-center">
-                  <span>CONTACT</span>
+                  <span>Contact</span>
                   {defaultPageId === 'contact' && (
                     <span className="ml-2 text-amber-500 text-xs font-bold">(DEFAULT)</span>
                   )}
@@ -237,7 +237,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
               </li>
               {isAuthenticated && (
                 <li className="opacity-50 px-4 py-2 text-gray-400">
-                  - CREATE PAGE (cannot be set as default)
+                  - Create Page (cannot be set as default)
                 </li>
               )}
               

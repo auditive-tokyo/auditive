@@ -109,9 +109,9 @@ export const useMenuItems = (isAuthenticated: boolean) => {
   // Construct the complete menu items array
   const menuItems = useMemo(() => [
     ...orderedPublishedPages,
-    { name: 'contact', label: 'CONTACT' },
+    { name: 'contact', label: 'Contact' },
     ...(isAuthenticated ? [
-      { name: 'create', label: 'CREATE PAGE' },
+      { name: 'create', label: 'Create Page' },
       ...(draftPages.length > 0 ? [{ name: 'drafts-separator', label: '-- DRAFTS --', isDraft: true, isSeparator: true }] : []),
       ...draftPages
     ] : [])    
