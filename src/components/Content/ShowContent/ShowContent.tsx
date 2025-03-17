@@ -59,13 +59,15 @@ const ShowContent: React.FC<ShowContentProps> = ({ id }) => {
 
   return (
     <div className="content-wrapper">
-      <div className="flex justify-between items-start mb-4">
-        <h1 className="text-2xl text-white">{content.title}</h1>
-        {/* 認証済みの場合のみ編集ボタンを表示 */}
+      {/* タイトルとボタンを含むコンテナ */}
+      <div className="relative text-center mb-6">
+        <h1 className="text-2xl text-white font-bold inline-block">{content.title}</h1>
+        
+        {/* 認証済みの場合のみ編集ボタンを表示（右上に配置） */}
         {isAuthenticated && (
           <button 
             onClick={toggleEditMode}
-            className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-500 transition-colors"
+            className="absolute right-0 top-0 px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-500 transition-colors"
           >
             Edit
           </button>
