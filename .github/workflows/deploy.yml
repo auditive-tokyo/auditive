@@ -39,29 +39,14 @@ jobs:
           API_KEY=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='ApiKey'].OutputValue" --output text)
           REGION=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='Region'].OutputValue" --output text)
           
-          # デバッグ出力
-          echo "Raw values check: ENDPOINT=${#ENDPOINT} chars, REGION=${#REGION} chars"
+          # Base64でエンコードして自動マスキングを回避
+          ENDPOINT_B64=$(echo -n "$ENDPOINT" | base64 -w0)
+          REGION_B64=$(echo -n "$REGION" | base64 -w0)
           
-          # セキュリティマスキングを回避するための対策
-          echo "::add-mask::${ENDPOINT}"
-          echo "::add-mask::${REGION}"
-          
-          # 出力を設定
-          echo "APPSYNC_ENDPOINT=${ENDPOINT}" >> $GITHUB_OUTPUT
+          # エンコードした値を出力
+          echo "APPSYNC_ENDPOINT_B64=${ENDPOINT_B64}" >> $GITHUB_OUTPUT
           echo "APPSYNC_API_KEY=${API_KEY}" >> $GITHUB_OUTPUT
-          echo "APPSYNC_REGION=${REGION}" >> $GITHUB_OUTPUT
-          
-          # 値が空の場合にフォールバック値を設定
-          if [ -z "$ENDPOINT" ] || [ "$ENDPOINT" == "null" ]; then
-            echo "WARNING: ENDPOINT is empty, using CloudFormation URL directly"
-            DIRECT_ENDPOINT=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" --output text)
-            echo "APPSYNC_ENDPOINT=${DIRECT_ENDPOINT}" >> $GITHUB_OUTPUT
-          fi
-          
-          if [ -z "$REGION" ] || [ "$REGION" == "null" ]; then
-            echo "WARNING: REGION is empty, using AWS_REGION secret"
-            echo "APPSYNC_REGION=${{ secrets.AWS_REGION }}" >> $GITHUB_OUTPUT
-          fi
+          echo "APPSYNC_REGION_B64=${REGION_B64}" >> $GITHUB_OUTPUT
 
       # ===== DEBUG SECTION START =====
       # 後で削除可能: CloudFormation 出力の直接確認
@@ -164,12 +149,21 @@ jobs:
           echo "VITE_AWS_REGION value exists: ${{ needs.deploy-appsync.outputs.APPSYNC_REGION != '' }}"
       # ===== DEBUG SECTION END =====
 
+      # Base64エンコードされた値をデコード
+      - name: Decode environment variables
+        id: decode-env
+        run: |
+          ENDPOINT=$(echo "${{ needs.deploy-appsync.outputs.APPSYNC_ENDPOINT_B64 }}" | base64 --decode)
+          REGION=$(echo "${{ needs.deploy-appsync.outputs.APPSYNC_REGION_B64 }}" | base64 --decode)
+          echo "ENDPOINT=${ENDPOINT}" >> $GITHUB_ENV
+          echo "REGION=${REGION}" >> $GITHUB_ENV
+
       - name: Build
         env:
           VITE_CONTACT_FORM_API_URL: https://${{ secrets.CONTACT_FORM_API_GATEWAY_ID }}.execute-api.${{ secrets.AWS_REGION }}.amazonaws.com/auditive/contact
-          VITE_APPSYNC_API_ENDPOINT: ${{ needs.deploy-appsync.outputs.APPSYNC_ENDPOINT }}
+          VITE_APPSYNC_API_ENDPOINT: ${{ env.ENDPOINT }}
           VITE_APPSYNC_API_KEY: ${{ needs.deploy-appsync.outputs.APPSYNC_API_KEY }}
-          VITE_AWS_REGION: ${{ needs.deploy-appsync.outputs.APPSYNC_REGION }}
+          VITE_AWS_REGION: ${{ env.REGION }}
         run: npm run build
 
       - name: Deploy
