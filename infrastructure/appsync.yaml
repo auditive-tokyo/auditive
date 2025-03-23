@@ -398,23 +398,12 @@ Resources:
           }
         }
       ResponseMappingTemplate: |
-        #if($ctx.result.items.size() == 0)
-          ## デフォルトページが見つからない場合、contactページのIDを検索
-          #set($contactPage = null)
-          #foreach($item in $ctx.result.items)
-            #if($item.title.toLowerCase().contains("contact"))
-              #set($contactPage = $item)
-              #break
-            #end
-          #end
-          
-          #if($contactPage)
-            $util.toJson($contactPage)
-          #else
-            null
-          #end
-        #else
+        #if($ctx.result.items.size() > 0)
+          ## デフォルトページが見つかった場合
           $util.toJson($ctx.result.items[0])
+        #else
+          ## デフォルトページが見つからない場合はnullを返す
+          $util.toJson(null)
         #end
 
 Outputs:
