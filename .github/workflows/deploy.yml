@@ -41,7 +41,7 @@ jobs:
           echo "REGION=${REGION}" >> appsync-outputs.env
 
       - name: Upload environment file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: appsync-outputs
           path: appsync-outputs.env
@@ -106,7 +106,7 @@ jobs:
           node-version: '20'
 
       - name: Download environment file
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: appsync-outputs
 
