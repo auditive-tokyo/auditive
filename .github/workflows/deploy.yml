@@ -144,9 +144,9 @@ jobs:
       - name: Debug final environment variables
         run: |
           echo "=== ENVIRONMENT VARIABLES FINAL CHECK ==="
-          echo "VITE_APPSYNC_API_ENDPOINT value exists: ${{ needs.deploy-appsync.outputs.APPSYNC_ENDPOINT != '' }}"
+          echo "APPSYNC_ENDPOINT_B64 value exists: ${{ needs.deploy-appsync.outputs.APPSYNC_ENDPOINT_B64 != '' }}"
           echo "VITE_APPSYNC_API_KEY value exists: ${{ needs.deploy-appsync.outputs.APPSYNC_API_KEY != '' }}"
-          echo "VITE_AWS_REGION value exists: ${{ needs.deploy-appsync.outputs.APPSYNC_REGION != '' }}"
+          echo "VITE_AWS_REGION value exists: ${{ needs.deploy-appsync.outputs.APPSYNC_REGION_B64 != '' }}"
       # ===== DEBUG SECTION END =====
 
       # Base64エンコードされた値をデコード
