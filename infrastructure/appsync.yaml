@@ -21,7 +21,7 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      TableName: autitive-content-table
+      TableName: auditive-content-table
       
   # GraphQLスキーマ定義
   AppSyncSchema:
@@ -176,7 +176,7 @@ Resources:
     Type: AWS::AppSync::DataSource
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
-      Name: autitivecontenttable
+      Name: auditivecontenttable
       Type: AMAZON_DYNAMODB
       ServiceRoleArn: !GetAtt AppSyncDynamoDBRole.Arn
       DynamoDBConfig:
