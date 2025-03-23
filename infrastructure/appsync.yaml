@@ -161,7 +161,6 @@ Resources:
             title: String,
             content: String,
             status: String,
-            isDefault: Boolean,
             createdAt: AWSDateTime
           ): Content
             @aws_subscribe(mutations: ["createContent"])
@@ -170,7 +169,6 @@ Resources:
             title: String,
             content: String,
             status: String,
-            isDefault: Boolean,
             updatedAt: AWSDateTime
           ): Content
             @aws_subscribe(mutations: ["updateContent"])
