@@ -23,13 +23,12 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
     orderedPublishedPages,
     publishedPages, // publishedPagesもエクスポートする
     updateCustomOrder,
-    resetCustomOrder,
     defaultPageId,
     setDefaultPage,
     deleteMenuItem,
     addMenuItem,
-    addChildToParent,     // 新しい関数
-    removeChildFromParent // 新しい関数
+    addChildToParent,
+    removeChildFromParent
   } = useMenuItems(isAuthenticated);
 
   // 親メニューの展開/折りたたみを切り替える関数
@@ -185,7 +184,7 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
   );
 
   return (
-    <nav className="fixed top-[100px] left-4 z-50">
+    <nav className="fixed top-[120px] left-4 z-50">
       <MenuToggle isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
 
       <div className={`fixed top-0 left-0 h-full w-[400px] bg-black/85 transition-transform duration-300 ${
