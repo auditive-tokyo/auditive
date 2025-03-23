@@ -10,6 +10,7 @@ Resources:
     Type: AWS::AppSync::ApiKey
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
+      Expires: 1711123200
 
   ContentTable:
     Type: AWS::DynamoDB::Table
@@ -28,7 +29,6 @@ Resources:
     Type: AWS::AppSync::GraphQLSchema
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
-      Expires: 1711123200
       Definition: |
         type Content {
           id: ID!
