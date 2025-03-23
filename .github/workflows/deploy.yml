@@ -9,12 +9,16 @@ jobs:
   # CFN Deploy
   deploy-appsync:
     runs-on: ubuntu-latest
+    outputs:
+      APPSYNC_ENDPOINT: ${{ steps.appsync-outputs.outputs.APPSYNC_ENDPOINT }}
+      APPSYNC_API_KEY: ${{ steps.appsync-outputs.outputs.APPSYNC_API_KEY }}
+      APPSYNC_REGION: ${{ steps.appsync-outputs.outputs.APPSYNC_REGION }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -45,18 +49,18 @@ jobs:
     needs: deploy-appsync
     steps:
       - name: Checkout contact form backend
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: auditive-tokyo/contact_form_backend
           ref: main
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -90,10 +94,10 @@ jobs:
     needs: [deploy-appsync, deploy-lambda]
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
