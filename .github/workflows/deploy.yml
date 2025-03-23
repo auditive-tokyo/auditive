@@ -118,7 +118,7 @@ jobs:
         run: |
           echo "--- CloudFormation Outputs ---"
           echo "APPSYNC_ENDPOINT: ${{ needs.deploy-appsync.outputs.APPSYNC_ENDPOINT }}"
-          echo "APPSYNC_API_KEY: ${{ needs.deploy-appsync.outputs.APPSYNC_API_KEY | slice(0, 5) }}..."
+          echo "APPSYNC_API_KEY: $(echo "${{ needs.deploy-appsync.outputs.APPSYNC_API_KEY }}" | cut -c1-5)..."
           echo "APPSYNC_REGION: ${{ needs.deploy-appsync.outputs.APPSYNC_REGION }}"
 
       # 後で削除可能: CloudFormation スタック詳細確認
