@@ -34,6 +34,7 @@ Resources:
           title: String!
           content: String
           status: String
+          isDefault: Boolean
           createdAt: AWSDateTime
           updatedAt: AWSDateTime
         }
@@ -47,6 +48,7 @@ Resources:
           title: String!
           content: String
           status: String
+          isDefault: Boolean
           createdAt: AWSDateTime
           updatedAt: AWSDateTime
         }
@@ -75,6 +77,7 @@ Resources:
           id: TableIDFilterInput
           title: TableStringFilterInput
           content: TableStringFilterInput
+          isDefault: Boolean
           createdAt: TableStringFilterInput
           updatedAt: TableStringFilterInput
         }
@@ -136,6 +139,7 @@ Resources:
           title: String
           content: String
           status: String
+          isDefault: Boolean
           updatedAt: AWSDateTime
         }
 
@@ -148,6 +152,7 @@ Resources:
         type Query {
           getContent(id: ID!): Content
           listContents(filter: TableContentFilterInput, limit: Int, nextToken: String): ContentConnection
+          getDefaultPage: Content
         }
 
         type Subscription {
@@ -156,6 +161,7 @@ Resources:
             title: String,
             content: String,
             status: String,
+            isDefault: Boolean,
             createdAt: AWSDateTime
           ): Content
             @aws_subscribe(mutations: ["createContent"])
@@ -164,6 +170,7 @@ Resources:
             title: String,
             content: String,
             status: String,
+            isDefault: Boolean,
             updatedAt: AWSDateTime
           ): Content
             @aws_subscribe(mutations: ["updateContent"])
@@ -247,6 +254,25 @@ Resources:
       FieldName: createContent
       DataSourceName: !GetAtt ContentTableDataSource.Name
       RequestMappingTemplate: |
+        #set($isDefault = $util.defaultIfNull($ctx.args.input.isDefault, false))
+        
+        #if($isDefault == true)
+          ## 他のデフォルトページをリセット
+          #set($scanResult = $util.dynamodb.scan("auditive-content-table", {}))
+          #foreach($item in $scanResult.items)
+            #if($item.isDefault && $item.isDefault.BOOL == true)
+              $util.dynamodb.updateItem({
+                "key": {"id": $item.id},
+                "tableName": "auditive-content-table",
+                "update": {
+                  "expression": "SET isDefault = :value",
+                  "expressionValues": {":value": {"BOOL": false}}
+                }
+              })
+            #end
+          #end
+        #end
+        
         {
           "version": "2017-02-28",
           "operation": "PutItem",
@@ -257,6 +283,7 @@ Resources:
             "title": $util.dynamodb.toDynamoDBJson($ctx.args.input.title),
             "content": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.content, "")),
             "status": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.status, "DRAFT")),
+            "isDefault": $util.dynamodb.toDynamoDBJson($isDefault),
             "createdAt": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.createdAt, $util.time.nowISO8601())),
             "updatedAt": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.updatedAt, $util.time.nowISO8601()))
           }
@@ -273,6 +300,36 @@ Resources:
       FieldName: updateContent
       DataSourceName: !GetAtt ContentTableDataSource.Name
       RequestMappingTemplate: |
+        #set($isDefaultSet = false)
+        #set($shouldUpdateIsDefault = false)
+        
+        #if(!$util.isNull($ctx.args.input.isDefault))
+          #set($shouldUpdateIsDefault = true)
+          #set($isDefaultSet = $ctx.args.input.isDefault)
+          
+          #if($isDefaultSet == true)
+            ## 他のデフォルトページをリセット
+            #set($scanResult = $util.dynamodb.scan("auditive-content-table", {}))
+            #foreach($item in $scanResult.items)
+              #if($item.id.S != $ctx.args.input.id && $item.isDefault && $item.isDefault.BOOL == true)
+                $util.dynamodb.updateItem({
+                  "key": {"id": $item.id},
+                  "tableName": "auditive-content-table",
+                  "update": {
+                    "expression": "SET isDefault = :value",
+                    "expressionValues": {":value": {"BOOL": false}}
+                  }
+                })
+              #end
+            #end
+          #end
+        #end
+        
+        #set($updateExpression = "SET #title = :title, #content = :content, #status = :status, #updatedAt = :updatedAt")
+        #if($shouldUpdateIsDefault)
+          #set($updateExpression = "$updateExpression, #isDefault = :isDefault")
+        #end
+        
         {
           "version": "2017-02-28",
           "operation": "UpdateItem",
@@ -280,18 +337,24 @@ Resources:
             "id": $util.dynamodb.toDynamoDBJson($ctx.args.input.id)
           },
           "update": {
-            "expression": "SET #title = :title, #content = :content, #status = :status, #updatedAt = :updatedAt",
+            "expression": "$updateExpression",
             "expressionNames": {
               "#title": "title",
               "#content": "content",
               "#status": "status",
               "#updatedAt": "updatedAt"
+              #if($shouldUpdateIsDefault)
+              , "#isDefault": "isDefault"
+              #end
             },
             "expressionValues": {
               ":title": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.title, "")),
               ":content": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.content, "")),
               ":status": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.status, "DRAFT")),
               ":updatedAt": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.updatedAt, $util.time.nowISO8601()))
+              #if($shouldUpdateIsDefault)
+              , ":isDefault": $util.dynamodb.toDynamoDBJson($isDefaultSet)
+              #end
             }
           }
         }
@@ -316,6 +379,45 @@ Resources:
         }
       ResponseMappingTemplate: |
         $util.toJson($ctx.result)
+
+  GetDefaultPageResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: getDefaultPage
+      DataSourceName: !GetAtt ContentTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "Scan",
+          "filter": {
+            "expression": "isDefault = :isDefault",
+            "expressionValues": {
+              ":isDefault": $util.dynamodb.toDynamoDBJson(true)
+            }
+          }
+        }
+      ResponseMappingTemplate: |
+        #if($ctx.result.items.size() == 0)
+          ## デフォルトページが見つからない場合、contactページのIDを検索
+          #set($contactPage = null)
+          #foreach($item in $ctx.result.items)
+            #if($item.title.toLowerCase().contains("contact"))
+              #set($contactPage = $item)
+              #break
+            #end
+          #end
+          
+          #if($contactPage)
+            $util.toJson($contactPage)
+          #else
+            null
+          #end
+        #else
+          $util.toJson($ctx.result.items[0])
+        #end
 
 Outputs:
   ApiEndpoint:
