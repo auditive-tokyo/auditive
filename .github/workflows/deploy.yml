@@ -43,6 +43,14 @@ jobs:
           echo "APPSYNC_API_KEY=${API_KEY}" >> $GITHUB_OUTPUT
           echo "APPSYNC_REGION=${REGION}" >> $GITHUB_OUTPUT
 
+      # ===== DEBUG SECTION START =====
+      # 後で削除可能: CloudFormation 出力の直接確認
+      - name: Verify direct CloudFormation outputs
+        run: |
+          echo "=== DIRECT FROM CLOUDFORMATION ==="
+          aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs"
+      # ===== DEBUG SECTION END =====
+
   # SAM Deploy
   deploy-lambda:
     runs-on: ubuntu-latest
@@ -104,10 +112,42 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # ===== DEBUG SECTION START =====
+      # 後で削除可能: 環境変数デバッグ（ビルド前）
+      - name: Debug environment variables before build
+        run: |
+          echo "--- CloudFormation Outputs ---"
+          echo "APPSYNC_ENDPOINT: ${{ needs.deploy-appsync.outputs.APPSYNC_ENDPOINT }}"
+          echo "APPSYNC_API_KEY: ${{ needs.deploy-appsync.outputs.APPSYNC_API_KEY | slice(0, 5) }}..."
+          echo "APPSYNC_REGION: ${{ needs.deploy-appsync.outputs.APPSYNC_REGION }}"
+
+      # 後で削除可能: CloudFormation スタック詳細確認
+      - name: Verify CloudFormation outputs
+        run: |
+          echo "--- CloudFormation Stack Details ---"
+          aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs"
+
+      # 後で削除可能: 検証用のAWS認証情報設定
+      - name: Configure AWS credentials (for verification)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # 後で削除可能: 最終環境変数確認
+      - name: Debug final environment variables
+        run: |
+          echo "=== ENVIRONMENT VARIABLES FINAL CHECK ==="
+          echo "VITE_APPSYNC_API_ENDPOINT value exists: ${{ needs.deploy-appsync.outputs.APPSYNC_ENDPOINT != '' }}"
+          echo "VITE_APPSYNC_API_KEY value exists: ${{ needs.deploy-appsync.outputs.APPSYNC_API_KEY != '' }}"
+          echo "VITE_AWS_REGION value exists: ${{ needs.deploy-appsync.outputs.APPSYNC_REGION != '' }}"
+      # ===== DEBUG SECTION END =====
+
       - name: Build
         env:
           VITE_CONTACT_FORM_API_URL: https://${{ secrets.CONTACT_FORM_API_GATEWAY_ID }}.execute-api.${{ secrets.AWS_REGION }}.amazonaws.com/auditive/contact
-          VITE_AMPLIFY_API_ENDPOINT: ${{ needs.deploy-appsync.outputs.APPSYNC_ENDPOINT }}
+          VITE_APPSYNC_API_ENDPOINT: ${{ needs.deploy-appsync.outputs.APPSYNC_ENDPOINT }}
           VITE_APPSYNC_API_KEY: ${{ needs.deploy-appsync.outputs.APPSYNC_API_KEY }}
           VITE_AWS_REGION: ${{ needs.deploy-appsync.outputs.APPSYNC_REGION }}
         run: npm run build
