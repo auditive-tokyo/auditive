@@ -35,9 +35,9 @@ jobs:
           API_KEY=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='ApiKey'].OutputValue" --output text)
           REGION=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='Region'].OutputValue" --output text)
           
-          echo "APPSYNC_ENDPOINT=$ENDPOINT" >> $GITHUB_OUTPUT
-          echo "APPSYNC_API_KEY=$API_KEY" >> $GITHUB_OUTPUT
-          echo "APPSYNC_REGION=$REGION" >> $GITHUB_OUTPUT
+          echo "APPSYNC_ENDPOINT=${ENDPOINT}" >> $GITHUB_OUTPUT
+          echo "APPSYNC_API_KEY=${API_KEY}" >> $GITHUB_OUTPUT
+          echo "APPSYNC_REGION=${REGION}" >> $GITHUB_OUTPUT
 
   # SAM Deploy
   deploy-lambda:
