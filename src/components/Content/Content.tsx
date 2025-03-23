@@ -1,0 +1,44 @@
+import React from 'react';
+import Contact from './Contact/Contact';
+import CreateContent from './CreateContent/CreateContent';
+import ShowContent from './ShowContent/ShowContent';
+import { MenuOption, VALID_MENU_OPTIONS } from '../Menu/Menu';
+import './styles/contentStyles.css';
+
+interface ContentProps {
+  activeMenu: MenuOption;
+}
+
+const Content: React.FC<ContentProps> = ({ activeMenu }) => {
+  const renderContent = () => {
+    // activeMenuが空の場合はローディング表示
+    if (!activeMenu) {
+      return <div>Loading...</div>;
+    }
+
+    const staticMenus = VALID_MENU_OPTIONS.filter(menu => menu !== 'login');
+    
+    if (!staticMenus.includes(activeMenu)) {
+      return <ShowContent id={activeMenu} />;
+    }
+
+    switch (activeMenu) {
+      case 'contact':
+        return <Contact />;
+      case 'create':
+        return <CreateContent />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="content-container">
+      <div className="content-wrapper">
+        {renderContent()}
+      </div>
+    </div>
+  );
+};
+
+export default Content;
