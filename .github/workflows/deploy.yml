@@ -9,10 +9,6 @@ jobs:
   # CFN Deploy
   deploy-appsync:
     runs-on: ubuntu-latest
-    outputs:
-      APPSYNC_ENDPOINT_B64: ${{ steps.appsync-outputs.outputs.APPSYNC_ENDPOINT_B64 }}
-      APPSYNC_API_KEY: ${{ steps.appsync-outputs.outputs.APPSYNC_API_KEY }}
-      APPSYNC_REGION_B64: ${{ steps.appsync-outputs.outputs.APPSYNC_REGION_B64 }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,22 +35,17 @@ jobs:
           API_KEY=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='ApiKey'].OutputValue" --output text)
           REGION=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='Region'].OutputValue" --output text)
           
-          # Base64でエンコードして自動マスキングを回避
-          ENDPOINT_B64=$(echo -n "$ENDPOINT" | base64 -w0)
-          REGION_B64=$(echo -n "$REGION" | base64 -w0)
-          
-          # エンコードした値を出力
-          echo "APPSYNC_ENDPOINT_B64=${ENDPOINT_B64}" >> $GITHUB_OUTPUT
-          echo "APPSYNC_API_KEY=${API_KEY}" >> $GITHUB_OUTPUT
-          echo "APPSYNC_REGION_B64=${REGION_B64}" >> $GITHUB_OUTPUT
+          # 以下の値をファイルに保存
+          echo "ENDPOINT=${ENDPOINT}" > appsync-outputs.env
+          echo "API_KEY=${API_KEY}" >> appsync-outputs.env
+          echo "REGION=${REGION}" >> appsync-outputs.env
 
-      # ===== DEBUG SECTION START =====
-      # 後で削除可能: CloudFormation 出力の直接確認
-      - name: Verify direct CloudFormation outputs
-        run: |
-          echo "=== DIRECT FROM CLOUDFORMATION ==="
-          aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs"
-      # ===== DEBUG SECTION END =====
+      - name: Upload environment file
+        uses: actions/upload-artifact@v3
+        with:
+          name: appsync-outputs
+          path: appsync-outputs.env
+          retention-days: 1
 
   # SAM Deploy
   deploy-lambda:
@@ -114,49 +105,17 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Download environment file
+        uses: actions/download-artifact@v3
+        with:
+          name: appsync-outputs
+
+      - name: Load environment variables
+        run: |
+          cat appsync-outputs.env >> $GITHUB_ENV
+
       - name: Install dependencies
         run: npm ci
-
-      # ===== DEBUG SECTION START =====
-      # 後で削除可能: 環境変数デバッグ（ビルド前）
-      - name: Debug environment variables before build
-        run: |
-          echo "--- CloudFormation Outputs ---"
-          echo "APPSYNC_ENDPOINT_B64 exists: ${{ needs.deploy-appsync.outputs.APPSYNC_ENDPOINT_B64 != '' }}"
-          echo "APPSYNC_API_KEY: $(echo "${{ needs.deploy-appsync.outputs.APPSYNC_API_KEY }}" | cut -c1-5)..."
-          echo "APPSYNC_REGION_B64 exists: ${{ needs.deploy-appsync.outputs.APPSYNC_REGION_B64 != '' }}"
-
-      # 後で削除可能: CloudFormation スタック詳細確認
-      - name: Verify CloudFormation outputs
-        run: |
-          echo "--- CloudFormation Stack Details ---"
-          aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs"
-
-      # 後で削除可能: 検証用のAWS認証情報設定
-      - name: Configure AWS credentials (for verification)
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      # 後で削除可能: 最終環境変数確認
-      - name: Debug final environment variables
-        run: |
-          echo "=== ENVIRONMENT VARIABLES FINAL CHECK ==="
-          echo "APPSYNC_ENDPOINT_B64 value exists: ${{ needs.deploy-appsync.outputs.APPSYNC_ENDPOINT_B64 != '' }}"
-          echo "VITE_APPSYNC_API_KEY value exists: ${{ needs.deploy-appsync.outputs.APPSYNC_API_KEY != '' }}"
-          echo "VITE_AWS_REGION value exists: ${{ needs.deploy-appsync.outputs.APPSYNC_REGION_B64 != '' }}"
-      # ===== DEBUG SECTION END =====
-
-      # Base64エンコードされた値をデコード
-      - name: Decode environment variables
-        id: decode-env
-        run: |
-          ENDPOINT=$(echo "${{ needs.deploy-appsync.outputs.APPSYNC_ENDPOINT_B64 }}" | base64 --decode)
-          REGION=$(echo "${{ needs.deploy-appsync.outputs.APPSYNC_REGION_B64 }}" | base64 --decode)
-          echo "ENDPOINT=${ENDPOINT}" >> $GITHUB_ENV
-          echo "REGION=${REGION}" >> $GITHUB_ENV
 
       - name: Build
         env:
