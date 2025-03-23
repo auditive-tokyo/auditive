@@ -121,7 +121,7 @@ jobs:
         env:
           VITE_CONTACT_FORM_API_URL: https://${{ secrets.CONTACT_FORM_API_GATEWAY_ID }}.execute-api.${{ secrets.AWS_REGION }}.amazonaws.com/auditive/contact
           VITE_APPSYNC_API_ENDPOINT: ${{ env.ENDPOINT }}
-          VITE_APPSYNC_API_KEY: ${{ needs.deploy-appsync.outputs.APPSYNC_API_KEY }}
+          VITE_APPSYNC_API_KEY: ${{ env.API_KEY }}
           VITE_AWS_REGION: ${{ env.REGION }}
         run: npm run build
 
