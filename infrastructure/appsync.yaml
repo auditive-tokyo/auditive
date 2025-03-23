@@ -1,0 +1,329 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  AppSyncApi:
+    Type: AWS::AppSync::GraphQLApi
+    Properties:
+      Name: AuditiveAPI
+      AuthenticationType: API_KEY
+
+  AppSyncApiKey:
+    Type: AWS::AppSync::ApiKey
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+
+  ContentTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      TableName: autitive-content-table
+      
+  # GraphQLスキーマ定義
+  AppSyncSchema:
+    Type: AWS::AppSync::GraphQLSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Definition: |
+        type Content {
+          id: ID!
+          title: String!
+          content: String
+          status: String
+          createdAt: AWSDateTime
+          updatedAt: AWSDateTime
+        }
+
+        type ContentConnection {
+          items: [Content]
+          nextToken: String
+        }
+
+        input CreateContentInput {
+          title: String!
+          content: String
+          status: String
+          createdAt: AWSDateTime
+          updatedAt: AWSDateTime
+        }
+
+        input DeleteContentInput {
+          id: ID!
+        }
+
+        input ModelSizeInput {
+          ne: Int
+          eq: Int
+          le: Int
+          lt: Int
+          ge: Int
+          gt: Int
+          between: [Int]
+        }
+
+        input TableBooleanFilterInput {
+          ne: Boolean
+          eq: Boolean
+          attributeExists: Boolean
+        }
+
+        input TableContentFilterInput {
+          id: TableIDFilterInput
+          title: TableStringFilterInput
+          content: TableStringFilterInput
+          createdAt: TableStringFilterInput
+          updatedAt: TableStringFilterInput
+        }
+
+        input TableFloatFilterInput {
+          ne: Float
+          eq: Float
+          le: Float
+          lt: Float
+          ge: Float
+          gt: Float
+          between: [Float]
+          attributeExists: Boolean
+        }
+
+        input TableIDFilterInput {
+          ne: ID
+          eq: ID
+          le: ID
+          lt: ID
+          ge: ID
+          gt: ID
+          contains: ID
+          notContains: ID
+          between: [ID]
+          beginsWith: ID
+          attributeExists: Boolean
+          size: ModelSizeInput
+        }
+
+        input TableIntFilterInput {
+          ne: Int
+          eq: Int
+          le: Int
+          lt: Int
+          ge: Int
+          gt: Int
+          between: [Int]
+          attributeExists: Boolean
+        }
+
+        input TableStringFilterInput {
+          ne: String
+          eq: String
+          le: String
+          lt: String
+          ge: String
+          gt: String
+          contains: String
+          notContains: String
+          between: [String]
+          beginsWith: String
+          attributeExists: Boolean
+          size: ModelSizeInput
+        }
+
+        input UpdateContentInput {
+          id: ID!
+          title: String
+          content: String
+          status: String
+          updatedAt: AWSDateTime
+        }
+
+        type Mutation {
+          createContent(input: CreateContentInput!): Content
+          updateContent(input: UpdateContentInput!): Content
+          deleteContent(input: DeleteContentInput!): Content
+        }
+
+        type Query {
+          getContent(id: ID!): Content
+          listContents(filter: TableContentFilterInput, limit: Int, nextToken: String): ContentConnection
+        }
+
+        type Subscription {
+          onCreateContent(
+            id: ID,
+            title: String,
+            content: String,
+            status: String,
+            createdAt: AWSDateTime
+          ): Content
+            @aws_subscribe(mutations: ["createContent"])
+          onUpdateContent(
+            id: ID,
+            title: String,
+            content: String,
+            status: String,
+            updatedAt: AWSDateTime
+          ): Content
+            @aws_subscribe(mutations: ["updateContent"])
+          onDeleteContent(id: ID): Content
+            @aws_subscribe(mutations: ["deleteContent"])
+        }
+
+  # DynamoDB データソース
+  ContentTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Name: autitivecontenttable
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !GetAtt AppSyncDynamoDBRole.Arn
+      DynamoDBConfig:
+        TableName: !Ref ContentTable
+        AwsRegion: !Ref AWS::Region
+
+  # AppSync用DynamoDB操作ロール
+  AppSyncDynamoDBRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: appsync.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        
+  # リゾルバー定義
+  GetContentResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: getContent
+      DataSourceName: !GetAtt ContentTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "GetItem",
+          "key": {
+            "id": $util.dynamodb.toDynamoDBJson($ctx.args.id)
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result)
+
+  ListContentsResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: listContents
+      DataSourceName: !GetAtt ContentTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "Scan",
+          "limit": $util.defaultIfNull($ctx.args.limit, 20),
+          "nextToken": $util.toJson($util.defaultIfNull($ctx.args.nextToken, null))
+        }
+      ResponseMappingTemplate: |
+        {
+          "items": $util.toJson($ctx.result.items),
+          "nextToken": $util.toJson($ctx.result.nextToken)
+        }
+
+  CreateContentResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Mutation
+      FieldName: createContent
+      DataSourceName: !GetAtt ContentTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "PutItem",
+          "key": {
+            "id": $util.dynamodb.toDynamoDBJson($util.autoId())
+          },
+          "attributeValues": {
+            "title": $util.dynamodb.toDynamoDBJson($ctx.args.input.title),
+            "content": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.content, "")),
+            "status": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.status, "DRAFT")),
+            "createdAt": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.createdAt, $util.time.nowISO8601())),
+            "updatedAt": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.updatedAt, $util.time.nowISO8601()))
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result)
+        
+  UpdateContentResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Mutation
+      FieldName: updateContent
+      DataSourceName: !GetAtt ContentTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "UpdateItem",
+          "key": {
+            "id": $util.dynamodb.toDynamoDBJson($ctx.args.input.id)
+          },
+          "update": {
+            "expression": "SET #title = :title, #content = :content, #status = :status, #updatedAt = :updatedAt",
+            "expressionNames": {
+              "#title": "title",
+              "#content": "content",
+              "#status": "status",
+              "#updatedAt": "updatedAt"
+            },
+            "expressionValues": {
+              ":title": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.title, "")),
+              ":content": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.content, "")),
+              ":status": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.status, "DRAFT")),
+              ":updatedAt": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.input.updatedAt, $util.time.nowISO8601()))
+            }
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result)
+
+  DeleteContentResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Mutation
+      FieldName: deleteContent
+      DataSourceName: !GetAtt ContentTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "DeleteItem",
+          "key": {
+            "id": $util.dynamodb.toDynamoDBJson($ctx.args.input.id)
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result)
+
+Outputs:
+  ApiEndpoint:
+    Description: "AppSync API Endpoint"
+    Value: !GetAtt AppSyncApi.GraphQLUrl
+  ApiKey:
+    Description: "AppSync API Key"
+    Value: !GetAtt AppSyncApiKey.ApiKey
+  Region:
+    Description: "AWS Region"
+    Value: !Ref AWS::Region
