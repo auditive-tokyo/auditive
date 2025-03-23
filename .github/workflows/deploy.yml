@@ -39,9 +39,29 @@ jobs:
           API_KEY=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='ApiKey'].OutputValue" --output text)
           REGION=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='Region'].OutputValue" --output text)
           
+          # デバッグ出力
+          echo "Raw values check: ENDPOINT=${#ENDPOINT} chars, REGION=${#REGION} chars"
+          
+          # セキュリティマスキングを回避するための対策
+          echo "::add-mask::${ENDPOINT}"
+          echo "::add-mask::${REGION}"
+          
+          # 出力を設定
           echo "APPSYNC_ENDPOINT=${ENDPOINT}" >> $GITHUB_OUTPUT
           echo "APPSYNC_API_KEY=${API_KEY}" >> $GITHUB_OUTPUT
           echo "APPSYNC_REGION=${REGION}" >> $GITHUB_OUTPUT
+          
+          # 値が空の場合にフォールバック値を設定
+          if [ -z "$ENDPOINT" ] || [ "$ENDPOINT" == "null" ]; then
+            echo "WARNING: ENDPOINT is empty, using CloudFormation URL directly"
+            DIRECT_ENDPOINT=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" --output text)
+            echo "APPSYNC_ENDPOINT=${DIRECT_ENDPOINT}" >> $GITHUB_OUTPUT
+          fi
+          
+          if [ -z "$REGION" ] || [ "$REGION" == "null" ]; then
+            echo "WARNING: REGION is empty, using AWS_REGION secret"
+            echo "APPSYNC_REGION=${{ secrets.AWS_REGION }}" >> $GITHUB_OUTPUT
+          fi
 
       # ===== DEBUG SECTION START =====
       # 後で削除可能: CloudFormation 出力の直接確認
