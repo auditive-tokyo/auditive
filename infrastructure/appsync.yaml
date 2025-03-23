@@ -28,7 +28,7 @@ Resources:
     Type: AWS::AppSync::GraphQLSchema
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
-      Expires: 1774656000
+      Expires: 1711123200
       Definition: |
         type Content {
           id: ID!
