@@ -23,18 +23,18 @@ Resources:
           KeyType: HASH
       TableName: auditive-content-table
 
-  # SiteSettingsテーブル定義
-  SiteSettingsTable:
+  # SiteConfigテーブル定義
+  SiteConfigTable:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: settingKey
+        - AttributeName: id
           AttributeType: S
       KeySchema:
-        - AttributeName: settingKey
+        - AttributeName: id
           KeyType: HASH
-      TableName: auditive-site-settings
+      TableName: auditive-site-config
       
   # GraphQLスキーマ定義
   AppSyncSchema:
@@ -152,24 +152,23 @@ Resources:
           updatedAt: AWSDateTime
         }
 
-        type SiteSetting {
-          settingKey: String!
-          settingValue: String!
-          updatedAt: AWSDateTime
+        type SiteConfig {
+          id: ID!
+          defaultPageId: String
+          menuOrder: [String]
         }
 
         type Mutation {
           createContent(input: CreateContentInput!): Content
           updateContent(input: UpdateContentInput!): Content
           deleteContent(input: DeleteContentInput!): Content
-          updateSiteSetting(settingKey: String!, settingValue: String!): SiteSetting
+          updateSiteConfig(id: ID!, defaultPageId: String, menuOrder: [String]): SiteConfig
         }
 
         type Query {
           getContent(id: ID!): Content
           listContents(filter: TableContentFilterInput, limit: Int, nextToken: String): ContentConnection
-          getSiteSetting(settingKey: String!): SiteSetting
-          listSiteSettings: [SiteSetting]
+          getSiteConfig(id: ID!): SiteConfig
         }
 
         type Subscription {
@@ -205,16 +204,16 @@ Resources:
         TableName: !Ref ContentTable
         AwsRegion: !Ref AWS::Region
 
-  # SiteSettingsテーブルのデータソース
-  SiteSettingsTableDataSource:
+  # SiteConfig テーブルのデータソース
+  SiteConfigTableDataSource:
     Type: AWS::AppSync::DataSource
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
-      Name: auditivesitesettings
+      Name: auditivesiteconfigtable
       Type: AMAZON_DYNAMODB
       ServiceRoleArn: !GetAtt AppSyncDynamoDBRole.Arn
       DynamoDBConfig:
-        TableName: !Ref SiteSettingsTable
+        TableName: !Ref SiteConfigTable
         AwsRegion: !Ref AWS::Region
 
   # AppSync用DynamoDB操作ロール
@@ -351,59 +350,52 @@ Resources:
       ResponseMappingTemplate: |
         $util.toJson($ctx.result)
 
-  GetSiteSettingResolver:
+  # SiteConfig取得用リゾルバー
+  GetSiteConfigResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: AppSyncSchema
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
       TypeName: Query
-      FieldName: getSiteSetting
-      DataSourceName: !GetAtt SiteSettingsTableDataSource.Name
+      FieldName: getSiteConfig
+      DataSourceName: !GetAtt SiteConfigTableDataSource.Name
       RequestMappingTemplate: |
         {
           "version": "2017-02-28",
           "operation": "GetItem",
           "key": {
-            "settingKey": $util.dynamodb.toDynamoDBJson($ctx.args.settingKey)
+            "id": $util.dynamodb.toDynamoDBJson($ctx.args.id)
           }
         }
       ResponseMappingTemplate: |
         $util.toJson($ctx.result)
 
-  ListSiteSettingsResolver:
-    Type: AWS::AppSync::Resolver
-    DependsOn: AppSyncSchema
-    Properties:
-      ApiId: !GetAtt AppSyncApi.ApiId
-      TypeName: Query
-      FieldName: listSiteSettings
-      DataSourceName: !GetAtt SiteSettingsTableDataSource.Name
-      RequestMappingTemplate: |
-        {
-          "version": "2017-02-28",
-          "operation": "Scan"
-        }
-      ResponseMappingTemplate: |
-        $util.toJson($ctx.result.items)
-
-  UpdateSiteSettingResolver:
+  # SiteConfig更新用リゾルバー
+  UpdateSiteConfigResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: AppSyncSchema
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
       TypeName: Mutation
-      FieldName: updateSiteSetting
-      DataSourceName: !GetAtt SiteSettingsTableDataSource.Name
+      FieldName: updateSiteConfig
+      DataSourceName: !GetAtt SiteConfigTableDataSource.Name
       RequestMappingTemplate: |
         {
           "version": "2017-02-28",
-          "operation": "PutItem",
+          "operation": "UpdateItem",
           "key": {
-            "settingKey": $util.dynamodb.toDynamoDBJson($ctx.args.settingKey)
+            "id": $util.dynamodb.toDynamoDBJson($ctx.args.id)
           },
-          "attributeValues": {
-            "settingValue": $util.dynamodb.toDynamoDBJson($ctx.args.settingValue),
-            "updatedAt": $util.dynamodb.toDynamoDBJson($util.time.nowISO8601())
+          "update": {
+            "expression": "SET #defaultPageId = :defaultPageId, #menuOrder = :menuOrder",
+            "expressionNames": {
+              "#defaultPageId": "defaultPageId",
+              "#menuOrder": "menuOrder"
+            },
+            "expressionValues": {
+              ":defaultPageId": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.defaultPageId, "")),
+              ":menuOrder": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.menuOrder, []))
+            }
           }
         }
       ResponseMappingTemplate: |
