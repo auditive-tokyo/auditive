@@ -22,6 +22,19 @@ Resources:
         - AttributeName: id
           KeyType: HASH
       TableName: auditive-content-table
+
+  # SiteConfigテーブル定義
+  SiteConfigTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      TableName: auditive-site-config
       
   # GraphQLスキーマ定義
   AppSyncSchema:
@@ -139,15 +152,23 @@ Resources:
           updatedAt: AWSDateTime
         }
 
+        type SiteConfig {
+          id: ID!
+          defaultPageId: String
+          menuOrder: [String]
+        }
+
         type Mutation {
           createContent(input: CreateContentInput!): Content
           updateContent(input: UpdateContentInput!): Content
           deleteContent(input: DeleteContentInput!): Content
+          updateSiteConfig(id: ID!, defaultPageId: String, menuOrder: [String]): SiteConfig
         }
 
         type Query {
           getContent(id: ID!): Content
           listContents(filter: TableContentFilterInput, limit: Int, nextToken: String): ContentConnection
+          getSiteConfig(id: ID!): SiteConfig
         }
 
         type Subscription {
@@ -181,6 +202,18 @@ Resources:
       ServiceRoleArn: !GetAtt AppSyncDynamoDBRole.Arn
       DynamoDBConfig:
         TableName: !Ref ContentTable
+        AwsRegion: !Ref AWS::Region
+
+  # SiteConfig テーブルのデータソース
+  SiteConfigTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Name: auditivesiteconfigtable
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !GetAtt AppSyncDynamoDBRole.Arn
+      DynamoDBConfig:
+        TableName: !Ref SiteConfigTable
         AwsRegion: !Ref AWS::Region
 
   # AppSync用DynamoDB操作ロール
@@ -312,6 +345,57 @@ Resources:
           "operation": "DeleteItem",
           "key": {
             "id": $util.dynamodb.toDynamoDBJson($ctx.args.input.id)
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result)
+
+  # SiteConfig取得用リゾルバー
+  GetSiteConfigResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: getSiteConfig
+      DataSourceName: !GetAtt SiteConfigTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "GetItem",
+          "key": {
+            "id": $util.dynamodb.toDynamoDBJson($ctx.args.id)
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result)
+
+  # SiteConfig更新用リゾルバー
+  UpdateSiteConfigResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Mutation
+      FieldName: updateSiteConfig
+      DataSourceName: !GetAtt SiteConfigTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "UpdateItem",
+          "key": {
+            "id": $util.dynamodb.toDynamoDBJson($ctx.args.id)
+          },
+          "update": {
+            "expression": "SET #defaultPageId = :defaultPageId, #menuOrder = :menuOrder",
+            "expressionNames": {
+              "#defaultPageId": "defaultPageId",
+              "#menuOrder": "menuOrder"
+            },
+            "expressionValues": {
+              ":defaultPageId": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.defaultPageId, "")),
+              ":menuOrder": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.menuOrder, []))
+            }
           }
         }
       ResponseMappingTemplate: |
