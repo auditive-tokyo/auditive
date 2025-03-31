@@ -22,6 +22,19 @@ Resources:
         - AttributeName: id
           KeyType: HASH
       TableName: auditive-content-table
+
+  # SiteSettingsテーブル定義
+  SiteSettingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: settingKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: settingKey
+          KeyType: HASH
+      TableName: auditive-site-settings
       
   # GraphQLスキーマ定義
   AppSyncSchema:
@@ -139,15 +152,24 @@ Resources:
           updatedAt: AWSDateTime
         }
 
+        type SiteSetting {
+          settingKey: String!
+          settingValue: String!
+          updatedAt: AWSDateTime
+        }
+
         type Mutation {
           createContent(input: CreateContentInput!): Content
           updateContent(input: UpdateContentInput!): Content
           deleteContent(input: DeleteContentInput!): Content
+          updateSiteSetting(settingKey: String!, settingValue: String!): SiteSetting
         }
 
         type Query {
           getContent(id: ID!): Content
           listContents(filter: TableContentFilterInput, limit: Int, nextToken: String): ContentConnection
+          getSiteSetting(settingKey: String!): SiteSetting
+          listSiteSettings: [SiteSetting]
         }
 
         type Subscription {
@@ -181,6 +203,18 @@ Resources:
       ServiceRoleArn: !GetAtt AppSyncDynamoDBRole.Arn
       DynamoDBConfig:
         TableName: !Ref ContentTable
+        AwsRegion: !Ref AWS::Region
+
+  # SiteSettingsテーブルのデータソース
+  SiteSettingsTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Name: auditivesitesettings
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !GetAtt AppSyncDynamoDBRole.Arn
+      DynamoDBConfig:
+        TableName: !Ref SiteSettingsTable
         AwsRegion: !Ref AWS::Region
 
   # AppSync用DynamoDB操作ロール
@@ -312,6 +346,64 @@ Resources:
           "operation": "DeleteItem",
           "key": {
             "id": $util.dynamodb.toDynamoDBJson($ctx.args.input.id)
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result)
+
+  GetSiteSettingResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: getSiteSetting
+      DataSourceName: !GetAtt SiteSettingsTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "GetItem",
+          "key": {
+            "settingKey": $util.dynamodb.toDynamoDBJson($ctx.args.settingKey)
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result)
+
+  ListSiteSettingsResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: listSiteSettings
+      DataSourceName: !GetAtt SiteSettingsTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "Scan"
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result.items)
+
+  UpdateSiteSettingResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Mutation
+      FieldName: updateSiteSetting
+      DataSourceName: !GetAtt SiteSettingsTableDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "PutItem",
+          "key": {
+            "settingKey": $util.dynamodb.toDynamoDBJson($ctx.args.settingKey)
+          },
+          "attributeValues": {
+            "settingValue": $util.dynamodb.toDynamoDBJson($ctx.args.settingValue),
+            "updatedAt": $util.dynamodb.toDynamoDBJson($util.time.nowISO8601())
           }
         }
       ResponseMappingTemplate: |
