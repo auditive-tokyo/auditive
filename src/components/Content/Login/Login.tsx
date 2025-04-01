@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../../auth/AuthContext';
+import { useSiteSettings } from '../../../hooks/useSiteSettings';
 
 const Login: React.FC = () => {
   const [apiKey, setApiKey] = useState('');
   const [error, setError] = useState('');
   const { login } = useAuth();
-
+  const { isLoading } = useSiteSettings(); // サイト設定を取得
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -13,9 +15,9 @@ const Login: React.FC = () => {
       if (!success) {
         setError('Invalid API key');
       } else {
-        // ログイン成功時にデフォルトページに移動
-        const defaultPage = localStorage.getItem('defaultPage');
-        window.location.hash = defaultPage; // フォールバックなし
+        // ログイン成功時、単純にホームに戻す
+        // App.tsx のルーティングロジックがデフォルトページを適切に処理
+        window.location.hash = '';
       }
     } catch (error) {
       setError('An error occurred during login');

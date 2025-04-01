@@ -7,8 +7,8 @@ export interface Content {
   updatedAt?: string;
 }
 
-export interface ContentProps {
+export interface SiteConfig {
   id: string;  //常に "pageOrder" などの固定値
-  defaultPageId: String
-  menuOrder: [String]
+  defaultPageId: string; // デフォルトページID
+  menuOrder: [string]; // メニューの順序
 }

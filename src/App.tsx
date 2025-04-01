@@ -7,35 +7,47 @@ import { AuthProvider } from './auth/AuthContext';
 import PrivateRoute from './auth/PrivateRoute';
 import Login from './components/Content/Login/Login';
 import CyberCursor from './components/CyberCursor/CyberCursor';
+import { useSiteSettings } from './hooks/useSiteSettings';
 
 const App: React.FC = () => {
-  // Get default page from localStorage
-  const getDefaultPage = (): string => {
-    const savedDefault = localStorage.getItem('defaultPage');
-    return savedDefault || 'contact'; // Fallback to 'contact' if no default is set
-  };
-
-  // Initialize activeMenu with hash or default page
-  const [activeMenu, setActiveMenu] = useState<MenuOption>(() => {
+  // DBからデフォルトページIDを取得
+  const { defaultPageId, isLoading } = useSiteSettings();
+  const [activeMenu, setActiveMenu] = useState<MenuOption>('');
+  
+  // 初期化 - ハッシュまたはデフォルトページを使用
+  useEffect(() => {
     const hash = window.location.hash.slice(1);
-    return hash || getDefaultPage();
-  });
+    if (hash) {
+      setActiveMenu(hash);
+    } else if (!isLoading && defaultPageId) {
+      setActiveMenu(defaultPageId);
+    }
+  }, [isLoading, defaultPageId]);
 
-  // Update hash change handler to use default page
+  // ハッシュ変更の処理 - DBから取得したデフォルトページを使用
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      setActiveMenu(hash || getDefaultPage());
+      setActiveMenu(hash || defaultPageId || 'contact');
     };
 
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [defaultPageId]);
 
   const handleMenuClick = (menu: MenuOption) => {
     setActiveMenu(menu);
     window.location.hash = menu;
   };
+
+  // ロード中は何も表示しない、またはローディングインジケーターを表示
+  if (isLoading && !activeMenu) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black/70">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <AuthProvider>
