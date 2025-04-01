@@ -384,13 +384,15 @@ Resources:
         #set($expressionNames = {})
         #set($expressionValues = {})
         
-        #if($ctx.args.defaultPageId != null)
+        ## defaultPageIdの存在チェックを修正
+        #if($util.isNull($ctx.args.defaultPageId) == false)
           #set($updateExpression = "SET #defaultPageId = :defaultPageId")
           $util.qr($expressionNames.put("#defaultPageId", "defaultPageId"))
           $util.qr($expressionValues.put(":defaultPageId", $util.dynamodb.toDynamoDBJson($ctx.args.defaultPageId)))
         #end
         
-        #if($ctx.args.menuOrder != null)
+        ## menuOrderの存在チェックを修正
+        #if($util.isNull($ctx.args.menuOrder) == false)
           #if($updateExpression == "")
             #set($updateExpression = "SET #menuOrder = :menuOrder")
           #else
