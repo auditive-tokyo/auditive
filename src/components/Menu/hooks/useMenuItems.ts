@@ -1,22 +1,32 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useContent } from '../../../hooks/useContent';
+import { useSiteSettings } from '../../../hooks/useSiteSettings'; // 新規インポート
 import { MenuItem, MenuOption } from '../types';
 
 export const useMenuItems = (isAuthenticated: boolean) => {
   const [dynamicPages, setDynamicPages] = useState<MenuItem[]>([]);
-  const { getAllContents, deleteContent, createContent, getContent, updateContent } = useContent(); // getContentとupdateContentを追加
-
-  // Store custom order in state
-  const [customOrder, setCustomOrder] = useState<string[]>(() => {
-    const savedOrder = localStorage.getItem('menuOrder');
-    return savedOrder ? JSON.parse(savedOrder) : [];
-  });
+  const { getAllContents, deleteContent, createContent, getContent, updateContent } = useContent();
   
-  // Add default page state
-  const [defaultPageId, setDefaultPageId] = useState<string>(() => {
-    const savedDefault = localStorage.getItem('defaultPage');
-    return savedDefault || 'contact';
-  });
+  // サイト設定フックを使用
+  const { 
+    menuOrder: dbMenuOrder, 
+    defaultPageId: dbDefaultPageId,
+    setMenuOrder: setDbMenuOrder,
+    setDefaultPage: setDbDefaultPage,
+    isLoading: isSettingsLoading
+  } = useSiteSettings();
+  
+  // ローカル状態をDBから読み込んだ値で初期化
+  const [customOrder, setCustomOrder] = useState<string[]>([]);
+  const [defaultPageId, setDefaultPageId] = useState<string>('contact');
+  
+  // DBから取得した設定をローカル状態に反映
+  useEffect(() => {
+    if (!isSettingsLoading) {
+      setCustomOrder(dbMenuOrder);
+      setDefaultPageId(dbDefaultPageId || 'contact');
+    }
+  }, [dbMenuOrder, dbDefaultPageId, isSettingsLoading]);
 
   // Fetch dynamic pages
   useEffect(() => {
@@ -118,20 +128,20 @@ export const useMenuItems = (isAuthenticated: boolean) => {
   ], [orderedPublishedPages, draftPages, isAuthenticated]);
 
   // Function to update custom order
-  const updateCustomOrder = (newOrder: string[]) => {
+  const updateCustomOrder = async (newOrder: string[]) => {
     setCustomOrder(newOrder);
-    localStorage.setItem('menuOrder', JSON.stringify(newOrder));
+    await setDbMenuOrder(newOrder); // DBに保存
   };
 
-  const resetCustomOrder = () => {
+  const resetCustomOrder = async () => {
     setCustomOrder([]);
-    localStorage.removeItem('menuOrder');
+    await setDbMenuOrder([]);
   };
   
   // Add function to set default page
-  const setDefaultPage = (pageId: string) => {
+  const setDefaultPage = async (pageId: string) => {
     setDefaultPageId(pageId);
-    localStorage.setItem('defaultPage', pageId);
+    await setDbDefaultPage(pageId);
   };
 
   // Add delete menu item function
@@ -140,7 +150,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
       // If deleting the default page, reset to contact
       if (pageId === defaultPageId) {
         setDefaultPageId('contact');
-        localStorage.setItem('defaultPage', 'contact');
+        await setDbDefaultPage('contact');
       }
       
       // Delete from database
@@ -153,7 +163,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
       if (customOrder.includes(pageId)) {
         const newOrder = customOrder.filter(id => id !== pageId);
         setCustomOrder(newOrder);
-        localStorage.setItem('menuOrder', JSON.stringify(newOrder));
+        await setDbMenuOrder(newOrder);
       }
       
       return true;
@@ -242,11 +252,11 @@ export const useMenuItems = (isAuthenticated: boolean) => {
         )
       );
       
-      // ここからが新しい処理: カスタム順序リストから削除
+      // ここからが変更部分: カスタム順序リストから削除
       if (customOrder.includes(childId)) {
         const newOrder = customOrder.filter(id => id !== childId);
         setCustomOrder(newOrder);
-        localStorage.setItem('menuOrder', JSON.stringify(newOrder));
+        await setDbMenuOrder(newOrder);
       }
       
       return true;
@@ -309,7 +319,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
       if (!isChildOfAnotherParent && !customOrder.includes(childId)) {
         const newOrder = [...customOrder, childId];
         setCustomOrder(newOrder);
-        localStorage.setItem('menuOrder', JSON.stringify(newOrder));
+        await setDbMenuOrder(newOrder);
       }
       
       return true;

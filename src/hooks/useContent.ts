@@ -1,7 +1,5 @@
-import { generateClient } from '@aws-amplify/api';
+import { client } from '../lib/amplify';
 import { Content } from '../types/content';
-
-const client = generateClient();
 
 export const useContent = () => {
   const createContent = async (
