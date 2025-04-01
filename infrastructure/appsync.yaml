@@ -380,23 +380,45 @@ Resources:
       FieldName: updateSiteConfig
       DataSourceName: !GetAtt SiteConfigTableDataSource.Name
       RequestMappingTemplate: |
+        #set($updateExpression = "")
+        #set($expressionNames = {})
+        #set($expressionValues = {})
+        
+        #if($ctx.args.defaultPageId != null)
+          #set($updateExpression = "SET #defaultPageId = :defaultPageId")
+          $util.qr($expressionNames.put("#defaultPageId", "defaultPageId"))
+          $util.qr($expressionValues.put(":defaultPageId", $util.dynamodb.toDynamoDBJson($ctx.args.defaultPageId)))
+        #end
+        
+        #if($ctx.args.menuOrder != null)
+          #if($updateExpression == "")
+            #set($updateExpression = "SET #menuOrder = :menuOrder")
+          #else
+            #set($updateExpression = "$updateExpression, #menuOrder = :menuOrder")
+          #end
+          $util.qr($expressionNames.put("#menuOrder", "menuOrder"))
+          $util.qr($expressionValues.put(":menuOrder", $util.dynamodb.toDynamoDBJson($ctx.args.menuOrder)))
+        #end
+        
         {
           "version": "2017-02-28",
           "operation": "UpdateItem",
           "key": {
             "id": $util.dynamodb.toDynamoDBJson($ctx.args.id)
           },
+          #if($updateExpression != "")
           "update": {
-            "expression": "SET #defaultPageId = :defaultPageId, #menuOrder = :menuOrder",
-            "expressionNames": {
-              "#defaultPageId": "defaultPageId",
-              "#menuOrder": "menuOrder"
-            },
-            "expressionValues": {
-              ":defaultPageId": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.defaultPageId, "")),
-              ":menuOrder": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.menuOrder, []))
-            }
+            "expression": "$updateExpression",
+            "expressionNames": $util.toJson($expressionNames),
+            "expressionValues": $util.toJson($expressionValues)
           }
+          #else
+          "update": {
+            "expression": "SET #dummy = :dummy",
+            "expressionNames": {"#dummy": "dummy"},
+            "expressionValues": {":dummy": $util.dynamodb.toDynamoDBJson("dummy")}
+          }
+          #end
         }
       ResponseMappingTemplate: |
         $util.toJson($ctx.result)
