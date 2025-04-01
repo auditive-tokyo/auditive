@@ -387,15 +387,36 @@ Resources:
             "id": $util.dynamodb.toDynamoDBJson($ctx.args.id)
           },
           "update": {
-            "expression": "SET #defaultPageId = :defaultPageId, #menuOrder = :menuOrder",
-            "expressionNames": {
-              "#defaultPageId": "defaultPageId",
-              "#menuOrder": "menuOrder"
-            },
-            "expressionValues": {
-              ":defaultPageId": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.defaultPageId, "")),
-              ":menuOrder": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.menuOrder, []))
-            }
+            #set($hasDefaultPageId = $ctx.args.defaultPageId != null)
+            #set($hasMenuOrder = $ctx.args.menuOrder != null)
+            
+            #if($hasDefaultPageId && $hasMenuOrder)
+              "expression": "SET #defaultPageId = :defaultPageId, #menuOrder = :menuOrder",
+              "expressionNames": {
+                "#defaultPageId": "defaultPageId",
+                "#menuOrder": "menuOrder"
+              },
+              "expressionValues": {
+                ":defaultPageId": $util.dynamodb.toDynamoDBJson($ctx.args.defaultPageId),
+                ":menuOrder": $util.dynamodb.toDynamoDBJson($ctx.args.menuOrder)
+              }
+            #elseif($hasDefaultPageId)
+              "expression": "SET #defaultPageId = :defaultPageId",
+              "expressionNames": {
+                "#defaultPageId": "defaultPageId"
+              },
+              "expressionValues": {
+                ":defaultPageId": $util.dynamodb.toDynamoDBJson($ctx.args.defaultPageId)
+              }
+            #else
+              "expression": "SET #menuOrder = :menuOrder",
+              "expressionNames": {
+                "#menuOrder": "menuOrder"
+              },
+              "expressionValues": {
+                ":menuOrder": $util.dynamodb.toDynamoDBJson($util.defaultIfNull($ctx.args.menuOrder, []))
+              }
+            #end
           }
         }
       ResponseMappingTemplate: |
