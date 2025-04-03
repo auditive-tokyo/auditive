@@ -380,48 +380,69 @@ Resources:
       FieldName: updateSiteConfig
       DataSourceName: !GetAtt SiteConfigTableDataSource.Name
       RequestMappingTemplate: |
-        #set($updateExpression = "")
-        #set($expressionNames = {})
-        #set($expressionValues = {})
-        
-        ## defaultPageIdの存在チェックを修正
-        #if($util.isNull($ctx.args.defaultPageId) == false)
-          #set($updateExpression = "SET #defaultPageId = :defaultPageId")
-          $util.qr($expressionNames.put("#defaultPageId", "defaultPageId"))
-          $util.qr($expressionValues.put(":defaultPageId", $util.dynamodb.toDynamoDBJson($ctx.args.defaultPageId)))
-        #end
-        
-        ## menuOrderの存在チェックを修正
-        #if($util.isNull($ctx.args.menuOrder) == false)
-          #if($updateExpression == "")
-            #set($updateExpression = "SET #menuOrder = :menuOrder")
-          #else
-            #set($updateExpression = "$updateExpression, #menuOrder = :menuOrder")
-          #end
-          $util.qr($expressionNames.put("#menuOrder", "menuOrder"))
-          $util.qr($expressionValues.put(":menuOrder", $util.dynamodb.toDynamoDBJson($ctx.args.menuOrder)))
-        #end
-        
-        {
-          "version": "2017-02-28",
-          "operation": "UpdateItem",
-          "key": {
-            "id": $util.dynamodb.toDynamoDBJson($ctx.args.id)
-          },
-          #if($updateExpression != "")
-          "update": {
-            "expression": "$updateExpression",
-            "expressionNames": $util.toJson($expressionNames),
-            "expressionValues": $util.toJson($expressionValues)
+        #if($util.isNull($ctx.args.defaultPageId) && $util.isNull($ctx.args.menuOrder))
+          ## 両方とも null の場合は何もしない
+          {
+            "version": "2017-02-28",
+            "operation": "UpdateItem",
+            "key": {
+              "id": $util.dynamodb.toDynamoDBJson($ctx.args.id)
+            },
+            "update": {
+              "expression": "SET #dummy = :dummy",
+              "expressionNames": {"#dummy": "dummy"},
+              "expressionValues": {":dummy": $util.dynamodb.toDynamoDBJson("dummy")}
+            }
           }
-          #else
-          "update": {
-            "expression": "SET #dummy = :dummy",
-            "expressionNames": {"#dummy": "dummy"},
-            "expressionValues": {":dummy": $util.dynamodb.toDynamoDBJson("dummy")}
+        #elseif($util.isNull($ctx.args.defaultPageId))
+          ## defaultPageId だけが null の場合
+          {
+            "version": "2017-02-28",
+            "operation": "UpdateItem",
+            "key": {
+              "id": $util.dynamodb.toDynamoDBJson($ctx.args.id)
+            },
+            "update": {
+              "expression": "SET #menuOrder = :menuOrder",
+              "expressionNames": {"#menuOrder": "menuOrder"},
+              "expressionValues": {":menuOrder": $util.dynamodb.toDynamoDBJson($ctx.args.menuOrder)}
+            }
           }
-          #end
-        }
+        #elseif($util.isNull($ctx.args.menuOrder))
+          ## menuOrder だけが null の場合
+          {
+            "version": "2017-02-28",
+            "operation": "UpdateItem",
+            "key": {
+              "id": $util.dynamodb.toDynamoDBJson($ctx.args.id)
+            },
+            "update": {
+              "expression": "SET #defaultPageId = :defaultPageId",
+              "expressionNames": {"#defaultPageId": "defaultPageId"},
+              "expressionValues": {":defaultPageId": $util.dynamodb.toDynamoDBJson($ctx.args.defaultPageId)}
+            }
+          }
+        #else
+          ## 両方とも存在する場合
+          {
+            "version": "2017-02-28",
+            "operation": "UpdateItem",
+            "key": {
+              "id": $util.dynamodb.toDynamoDBJson($ctx.args.id)
+            },
+            "update": {
+              "expression": "SET #defaultPageId = :defaultPageId, #menuOrder = :menuOrder",
+              "expressionNames": {
+                "#defaultPageId": "defaultPageId",
+                "#menuOrder": "menuOrder"
+              },
+              "expressionValues": {
+                ":defaultPageId": $util.dynamodb.toDynamoDBJson($ctx.args.defaultPageId),
+                ":menuOrder": $util.dynamodb.toDynamoDBJson($ctx.args.menuOrder)
+              }
+            }
+          }
+        #end
       ResponseMappingTemplate: |
         $util.toJson($ctx.result)
 
