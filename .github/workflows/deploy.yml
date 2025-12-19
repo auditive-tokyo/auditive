@@ -26,19 +26,19 @@ jobs:
           aws cloudformation deploy \
             --template-file infrastructure/appsync.yaml \
             --stack-name auditive-appsync \
-            --capabilities CAPABILITY_IAM \
+            --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
             
       - name: Get AppSync outputs and set environment
         id: appsync-outputs
         run: |
           ENDPOINT=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" --output text)
-          API_KEY=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='ApiKey'].OutputValue" --output text)
+          IDENTITY_POOL_ID=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='IdentityPoolId'].OutputValue" --output text)
           REGION=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='Region'].OutputValue" --output text)
           
           # 以下の値をファイルに保存
           echo "ENDPOINT=${ENDPOINT}" > appsync-outputs.env
-          echo "API_KEY=${API_KEY}" >> appsync-outputs.env
+          echo "IDENTITY_POOL_ID=${IDENTITY_POOL_ID}" >> appsync-outputs.env
           echo "REGION=${REGION}" >> appsync-outputs.env
 
       - name: Upload environment file
@@ -122,7 +122,7 @@ jobs:
         env:
           VITE_CONTACT_FORM_API_URL: https://${{ secrets.CONTACT_FORM_API_GATEWAY_ID }}.execute-api.${{ secrets.AWS_REGION }}.amazonaws.com/auditive/contact
           VITE_APPSYNC_API_ENDPOINT: ${{ env.ENDPOINT }}
-          VITE_APPSYNC_API_KEY: ${{ env.API_KEY }}
+          VITE_COGNITO_IDENTITY_POOL_ID: ${{ env.IDENTITY_POOL_ID }}
           VITE_AWS_REGION: ${{ env.REGION }}
         run: npm run build
 

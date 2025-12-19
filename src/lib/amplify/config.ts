@@ -5,8 +5,13 @@ export const config = {
     GraphQL: {
       endpoint: import.meta.env.VITE_APPSYNC_API_ENDPOINT,
       region: import.meta.env.VITE_AWS_REGION,
-      defaultAuthMode: 'apiKey' as const, // Using type assertion
-      apiKey: import.meta.env.VITE_APPSYNC_API_KEY
+      defaultAuthMode: 'iam' as const,
+    }
+  },
+  Auth: {
+    Cognito: {
+      identityPoolId: import.meta.env.VITE_COGNITO_IDENTITY_POOL_ID,
+      allowGuestAccess: true,
     }
   }
 };

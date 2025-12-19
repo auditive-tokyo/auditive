@@ -1,15 +1,63 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Resources:
+  # ===========================================
+  # AppSync API (AWS_IAM認証)
+  # ===========================================
   AppSyncApi:
     Type: AWS::AppSync::GraphQLApi
     Properties:
       Name: AuditiveAPI
-      AuthenticationType: API_KEY
+      AuthenticationType: AWS_IAM
 
-  AppSyncApiKey:
-    Type: AWS::AppSync::ApiKey
+  # ===========================================
+  # Cognito Identity Pool (未認証アクセス有効)
+  # ===========================================
+  CognitoIdentityPool:
+    Type: AWS::Cognito::IdentityPool
     Properties:
-      ApiId: !GetAtt AppSyncApi.ApiId
+      IdentityPoolName: AuditiveIdentityPool
+      AllowUnauthenticatedIdentities: true
+
+  # Identity Pool のロール割り当て
+  CognitoIdentityPoolRoleAttachment:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId: !Ref CognitoIdentityPool
+      Roles:
+        unauthenticated: !GetAtt CognitoUnauthRole.Arn
+
+  # ===========================================
+  # 未認証ユーザー用 IAM ロール
+  # ===========================================
+  CognitoUnauthRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AuditiveUnauthRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                cognito-identity.amazonaws.com:aud: !Ref CognitoIdentityPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: unauthenticated
+      Policies:
+        - PolicyName: AuditiveAppSyncPublicAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - appsync:GraphQL
+                Resource:
+                  # Query のみ許可（読み取り専用）
+                  - !Sub "${AppSyncApi.Arn}/types/Query/*"
+                  # Subscriptionも許可（リアルタイム更新用）
+                  - !Sub "${AppSyncApi.Arn}/types/Subscription/*"
 
   ContentTable:
     Type: AWS::DynamoDB::Table
@@ -450,9 +498,9 @@ Outputs:
   ApiEndpoint:
     Description: "AppSync API Endpoint"
     Value: !GetAtt AppSyncApi.GraphQLUrl
-  ApiKey:
-    Description: "AppSync API Key"
-    Value: !GetAtt AppSyncApiKey.ApiKey
+  IdentityPoolId:
+    Description: "Cognito Identity Pool ID"
+    Value: !Ref CognitoIdentityPool
   Region:
     Description: "AWS Region"
     Value: !Ref AWS::Region
