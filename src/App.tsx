@@ -1,42 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import Footer from './components/Footer';
-import Header from './components/Header';
-import MainContent from './components/MainContent';
-import { Menu, MenuOption } from './components/Menu/Menu';
-import { AuthProvider } from './auth/AuthContext';
-import PrivateRoute from './auth/PrivateRoute';
-import Login from './components/Content/Login/Login';
-import CyberCursor from './components/CyberCursor/CyberCursor';
-import { useSiteSettings } from './hooks/useSiteSettings';
+import React, { useSyncExternalStore } from "react";
+import Footer from "./components/Footer";
+import Header from "./components/Header";
+import MainContent from "./components/MainContent";
+import { Menu, MenuOption } from "./components/Menu/Menu";
+import { AuthProvider } from "./auth/AuthContext";
+import PrivateRoute from "./auth/PrivateRoute";
+import Login from "./components/Content/Login/Login";
+import CyberCursor from "./components/CyberCursor/CyberCursor";
+import { useSiteSettings } from "./hooks/useSiteSettings";
+
+// ハッシュを購読するカスタムフック
+const useHash = () => {
+  const subscribe = (callback: () => void) => {
+    window.addEventListener("hashchange", callback);
+    return () => window.removeEventListener("hashchange", callback);
+  };
+  const getSnapshot = () => window.location.hash.slice(1);
+  return useSyncExternalStore(subscribe, getSnapshot);
+};
 
 const App: React.FC = () => {
   // DBからデフォルトページIDを取得
   const { defaultPageId, isLoading } = useSiteSettings();
-  const [activeMenu, setActiveMenu] = useState<MenuOption>('');
-  
-  // 初期化 - ハッシュまたはデフォルトページを使用
-  useEffect(() => {
-    const hash = window.location.hash.slice(1);
-    if (hash) {
-      setActiveMenu(hash);
-    } else if (!isLoading && defaultPageId) {
-      setActiveMenu(defaultPageId);
-    }
-  }, [isLoading, defaultPageId]);
+  const hash = useHash();
 
-  // ハッシュ変更の処理 - DBから取得したデフォルトページを使用
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.slice(1);
-      setActiveMenu(hash || defaultPageId || 'contact');
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [defaultPageId]);
+  // activeMenuはhashがあればhash、なければdefaultPageIdを使用
+  const activeMenu: MenuOption = hash || defaultPageId || "";
 
   const handleMenuClick = (menu: MenuOption) => {
-    setActiveMenu(menu);
     window.location.hash = menu;
   };
 
@@ -55,9 +46,9 @@ const App: React.FC = () => {
         <CyberCursor />
         <Header />
         <Menu activeMenu={activeMenu} onMenuClick={handleMenuClick} />
-        {activeMenu === 'login' ? (
+        {activeMenu === "login" ? (
           <Login />
-        ) : activeMenu === 'create' ? (
+        ) : activeMenu === "create" ? (
           <PrivateRoute>
             <MainContent activeMenu={activeMenu} />
           </PrivateRoute>
