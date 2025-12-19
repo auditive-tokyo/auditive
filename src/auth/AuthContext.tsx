@@ -18,8 +18,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (apiKey: string) => {
-    if (apiKey === import.meta.env.VITE_APPSYNC_API_KEY) {
+  const login = async (password: string) => {
+    if (password === import.meta.env.VITE_ADMIN_PASSWORD) {
       localStorage.setItem('auth_token', 'authenticated');
       setIsAuthenticated(true);
       return true;

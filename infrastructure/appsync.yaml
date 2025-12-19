@@ -54,10 +54,9 @@ Resources:
                 Action:
                   - appsync:GraphQL
                 Resource:
-                  # Query のみ許可（読み取り専用）
+                  # 全操作を許可（フロントエンドでUIアクセス制御）
                   - !Sub "${AppSyncApi.Arn}/types/Query/*"
-                  # Subscriptionも許可（リアルタイム更新用）
-                  - !Sub "${AppSyncApi.Arn}/types/Subscription/*"
+                  - !Sub "${AppSyncApi.Arn}/types/Mutation/*"
 
   ContentTable:
     Type: AWS::DynamoDB::Table
@@ -217,27 +216,6 @@ Resources:
           getContent(id: ID!): Content
           listContents(filter: TableContentFilterInput, limit: Int, nextToken: String): ContentConnection
           getSiteConfig(id: ID!): SiteConfig
-        }
-
-        type Subscription {
-          onCreateContent(
-            id: ID,
-            title: String,
-            content: String,
-            status: String,
-            createdAt: AWSDateTime
-          ): Content
-            @aws_subscribe(mutations: ["createContent"])
-          onUpdateContent(
-            id: ID,
-            title: String,
-            content: String,
-            status: String,
-            updatedAt: AWSDateTime
-          ): Content
-            @aws_subscribe(mutations: ["updateContent"])
-          onDeleteContent(id: ID): Content
-            @aws_subscribe(mutations: ["deleteContent"])
         }
 
   # DynamoDB データソース
