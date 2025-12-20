@@ -1,33 +1,33 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../../auth/AuthContext';
-import { useSiteSettings } from '../../../hooks/useSiteSettings';
+import React, { useState } from "react";
+import { useAuth } from "../../../auth/AuthContext";
 
 const Login: React.FC = () => {
-  const [apiKey, setApiKey] = useState('');
-  const [error, setError] = useState('');
+  const [apiKey, setApiKey] = useState("");
+  const [error, setError] = useState("");
   const { login } = useAuth();
-  const { isLoading } = useSiteSettings(); // サイト設定を取得
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const success = await login(apiKey);
       if (!success) {
-        setError('Invalid API key');
+        setError("Invalid API key");
       } else {
         // ログイン成功時、単純にホームに戻す
         // App.tsx のルーティングロジックがデフォルトページを適切に処理
-        window.location.hash = '';
+        window.location.hash = "";
       }
-    } catch (error) {
-      setError('An error occurred during login');
+    } catch {
+      setError("An error occurred during login");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black/50">
       <div className="max-w-md w-full bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-white mb-6 text-center">Login</h2>
+        <h2 className="text-2xl font-bold text-white mb-6 text-center">
+          Login
+        </h2>
         {error && (
           <div className="bg-red-500/50 backdrop-blur-sm text-white p-3 rounded mb-4">
             {error}
