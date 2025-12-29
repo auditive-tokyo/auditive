@@ -1,4 +1,4 @@
-import React, { useSyncExternalStore } from "react";
+import React, { useState } from "react";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import MainContent from "./components/MainContent";
@@ -9,26 +9,17 @@ import Login from "./components/Content/Login/Login";
 import CyberCursor from "./components/CyberCursor/CyberCursor";
 import { useSiteSettings } from "./hooks/useSiteSettings";
 
-// ハッシュを購読するカスタムフック
-const useHash = () => {
-  const subscribe = (callback: () => void) => {
-    window.addEventListener("hashchange", callback);
-    return () => window.removeEventListener("hashchange", callback);
-  };
-  const getSnapshot = () => window.location.hash.slice(1);
-  return useSyncExternalStore(subscribe, getSnapshot);
-};
-
 const App: React.FC = () => {
   // DBからデフォルトページIDを取得
   const { defaultPageId, isLoading } = useSiteSettings();
-  const hash = useHash();
+  // selectedMenu: ユーザーが選択したメニュー（null = まだ選択していない）
+  const [selectedMenu, setSelectedMenu] = useState<MenuOption | null>(null);
 
-  // activeMenuはhashがあればhash、なければdefaultPageIdを使用
-  const activeMenu: MenuOption = hash || defaultPageId || "";
+  // 表示するメニュー: 選択済みならそれ、なければデフォルトページ
+  const activeMenu: MenuOption = selectedMenu ?? defaultPageId ?? "";
 
   const handleMenuClick = (menu: MenuOption) => {
-    window.location.hash = menu;
+    setSelectedMenu(menu);
   };
 
   // ロード中は何も表示しない、またはローディングインジケーターを表示
