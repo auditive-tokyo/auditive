@@ -1,61 +1,77 @@
-import React, { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import remarkGfm from 'remark-gfm';
-import { useCreateContent } from './hooks/useCreateContent';
-import { ActionButtons } from './components/ActionButtons';
+import React, { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import remarkGfm from "remark-gfm";
+import { useCreateContent } from "./hooks/useCreateContent";
+import { ActionButtons } from "./components/ActionButtons";
 
 const CreateContent: React.FC = () => {
   const [preview, setPreview] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
-  const { title, content, isLoading, setTitle, setContent, handleSubmit } = useCreateContent();
+  const {
+    title,
+    content,
+    isLoading,
+    setTitle,
+    setContent,
+    handleSubmit,
+  } = useCreateContent();
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setContent(newContent);
-    
+
     // h1タグまたは#で始まる行があるかチェック
-    const hasH1 = newContent.toLowerCase().includes('<h1') ||
-                  newContent.split('\n').some(line => line.trim().startsWith('# '));
+    const hasH1 =
+      newContent.toLowerCase().includes("<h1") ||
+      newContent.split("\n").some((line) => line.trim().startsWith("# "));
     setShowWarning(hasH1);
   };
 
   const components = {
     // divやiframeなどのHTMLをそのまま扱えるようにする
     p: ({ children }) => {
-      if (typeof children === 'string' && (
-        children.includes('<h') ||
-        children.includes('<a') ||
-        children.includes('<iframe') || 
-        children.includes('<div') || 
-        children.includes('<span')
-      )) {
+      if (
+        typeof children === "string" &&
+        (children.includes("<h") ||
+          children.includes("<a") ||
+          children.includes("<iframe") ||
+          children.includes("<div") ||
+          children.includes("<span"))
+      ) {
         return <div dangerouslySetInnerHTML={{ __html: children }} />;
       }
       return <p>{children}</p>;
-    }
+    },
   };
 
   return (
     <div className="content-wrapper">
-      <h2 className="mb-4 text-black">Create New Page</h2>
+      <h2 className="mb-4">Create New Page</h2>
       <div className="flex gap-4 mb-4">
         <button
           onClick={() => setPreview(false)}
-          className={`px-4 py-2 rounded ${!preview ? 'bg-cyan-500' : 'bg-gray-700'}`}
+          className={`px-4 py-2 rounded ${
+            !preview ? "bg-cyan-500" : "bg-gray-700"
+          }`}
         >
           Edit
         </button>
         <button
           onClick={() => setPreview(true)}
-          className={`px-4 py-2 rounded ${preview ? 'bg-cyan-500' : 'bg-gray-700'}`}
+          className={`px-4 py-2 rounded ${
+            preview ? "bg-cyan-500" : "bg-gray-700"
+          }`}
         >
           Preview
         </button>
       </div>
 
       {!preview ? (
-        <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => e.preventDefault()}
+        >
           <input
             type="text"
             value={title}
@@ -74,7 +90,8 @@ const CreateContent: React.FC = () => {
             />
             {showWarning && (
               <div className="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded m-2 text-sm">
-                Please use the title field for main headings instead of # or &lt;h1&gt;
+                Please use the title field for main headings instead of # or
+                &lt;h1&gt;
               </div>
             )}
           </div>
@@ -83,9 +100,9 @@ const CreateContent: React.FC = () => {
       ) : (
         <div className="flex flex-col gap-4">
           <div className="preview-content bg-gray-800 p-4 rounded">
-            <h1 className="mb-4 text-white">{title}</h1>
+            <h1 className="mb-4">{title}</h1>
             <div className="prose prose-invert max-w-none">
-              <ReactMarkdown 
+              <ReactMarkdown
                 rehypePlugins={[rehypeRaw]}
                 remarkPlugins={[remarkGfm]}
                 components={components}

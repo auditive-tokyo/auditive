@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface MenuHeaderProps {
   onClose: () => void;
@@ -11,7 +11,7 @@ export const MenuHeader: React.FC<MenuHeaderProps> = ({
   onClose,
   isReorderMode,
   toggleReorderMode,
-  isAuthenticated
+  isAuthenticated,
 }) => {
   return (
     <>
@@ -30,10 +30,10 @@ export const MenuHeader: React.FC<MenuHeaderProps> = ({
         <button
           onClick={toggleReorderMode}
           className={`absolute top-6 left-6 px-4 py-2 rounded ${
-            isReorderMode ? 'bg-amber-500 text-black' : 'bg-gray-700 text-white'
+            isReorderMode ? "bg-amber-500" : "bg-gray-700 text-white"
           }`}
         >
-          {isReorderMode ? 'Exit Reorder Mode' : 'Reorder Menu'}
+          {isReorderMode ? "Exit Reorder Mode" : "Reorder Menu"}
         </button>
       )}
     </>

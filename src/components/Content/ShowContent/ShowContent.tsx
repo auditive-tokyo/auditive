@@ -67,7 +67,7 @@ const ShowContent: React.FC<ShowContentProps> = ({ id }) => {
     <div className="content-wrapper">
       {/* タイトルとボタンを含むコンテナ */}
       <div className="relative text-center mb-6">
-        <h1 className="text-white inline-block">{content.title}</h1>
+        <h1 className="inline-block">{content.title}</h1>
 
         {/* 認証済みの場合のみ編集ボタンを表示（右上に配置） */}
         {isAuthenticated && (

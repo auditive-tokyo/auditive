@@ -27,11 +27,11 @@
 
 /* proseクラス内のスタイルを上書き */
 .prose {
-  @apply font-sans text-lg;
+  @apply font-sans text-lg text-white;
 }
 
 .prose p {
-  @apply text-lg;
+  @apply text-lg text-white;
 }
 
 .prose h1 {
@@ -44,6 +44,10 @@
 
 .prose h3 {
   @apply text-xl font-bold;
+}
+
+.prose h4 {
+  @apply text-lg font-semibold;
 }
 
 @layer components {

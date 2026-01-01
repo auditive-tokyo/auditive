@@ -73,7 +73,7 @@ const EditContent: React.FC<EditContentProps> = ({
 
   return (
     <div className="content-wrapper">
-      <h2 className="mb-4 text-white">Edit Page</h2>
+      <h2 className="mb-4">Edit Page</h2>
       <div className="flex gap-4 mb-4">
         <button
           onClick={() => setPreview(false)}
@@ -138,7 +138,7 @@ const EditContent: React.FC<EditContentProps> = ({
       ) : (
         <div className="flex flex-col gap-4">
           <div className="preview-content bg-gray-800 p-4 rounded">
-            <h1 className="mb-4 text-white">{title}</h1>
+            <h1 className="mb-4">{title}</h1>
             <div className="prose prose-invert max-w-none">
               <ReactMarkdown
                 rehypePlugins={[rehypeRaw]}
