@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useContent } from "@/hooks/useContent";
-import { useSiteSettings } from "@/hooks/useSiteSettings"; // 新規インポート
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { MenuItem } from "../types";
 
 export const useMenuItems = (isAuthenticated: boolean) => {

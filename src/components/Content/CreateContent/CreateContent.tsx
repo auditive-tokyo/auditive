@@ -38,7 +38,7 @@ const CreateContent: React.FC = () => {
 
   return (
     <div className="content-wrapper">
-      <h2 className="text-2xl mb-4 text-black">Create New Page</h2>
+      <h2 className="mb-4 text-black">Create New Page</h2>
       <div className="flex gap-4 mb-4">
         <button
           onClick={() => setPreview(false)}
@@ -83,7 +83,7 @@ const CreateContent: React.FC = () => {
       ) : (
         <div className="flex flex-col gap-4">
           <div className="preview-content bg-gray-800 p-4 rounded">
-            <h1 className="text-2xl mb-4 text-white">{title}</h1>
+            <h1 className="mb-4 text-white">{title}</h1>
             <div className="prose prose-invert max-w-none">
               <ReactMarkdown 
                 rehypePlugins={[rehypeRaw]}

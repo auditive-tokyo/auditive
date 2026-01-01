@@ -43,8 +43,8 @@ const Contact: React.FC = () => {
 
   return (
     <div className="p-5 rounded-lg"> {/* 背景色を削除 */}
-      <h1 className="text-2xl text-white mb-4">Contact</h1>
-      <p className="text-base text-gray-300 mb-6">
+      <h1 className="text-white mb-4">Contact</h1>
+      <p className="text-lg text-gray-300 mb-6">
         Contact us for collab, booking, or just to say hi!
       </p>
       <form onSubmit={handleSubmit} className="flex flex-col">

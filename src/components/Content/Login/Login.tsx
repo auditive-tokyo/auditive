@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "../../../auth/AuthContext";
+import { useAuth } from "@/auth/AuthContext";
 
 interface LoginProps {
   onLoginSuccess?: () => void;
@@ -32,7 +32,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-black/50">
       <div className="max-w-md w-full bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-white mb-6 text-center">
+        <h2 className="text-white mb-6 text-center">
           Login
         </h2>
         {error && (

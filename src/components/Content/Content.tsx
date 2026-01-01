@@ -3,7 +3,6 @@ import Contact from './Contact/Contact';
 import CreateContent from './CreateContent/CreateContent';
 import ShowContent from './ShowContent/ShowContent';
 import { MenuOption, VALID_MENU_OPTIONS } from '../Menu/Menu';
-import './styles/contentStyles.css';
 
 interface ContentProps {
   activeMenu: MenuOption;
