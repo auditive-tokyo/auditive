@@ -10,5 +10,5 @@ export interface Content {
 export interface SiteConfig {
   id: string;  //常に "pageOrder" などの固定値
   defaultPageId: string; // デフォルトページID
-  menuOrder: [string]; // メニューの順序
+  menuOrder: string[]; // メニューの順序
 }

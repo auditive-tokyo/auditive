@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { useContent } from '../../../../hooks/useContent';
+import { useCallback } from "react";
+import { useContent } from "@/hooks/useContent";
 
 interface UseSubmitContentProps {
   title: string;
@@ -14,24 +14,31 @@ export const useSubmitContent = ({
   content,
   setTitle,
   setContent,
-  setIsLoading
+  setIsLoading,
 }: UseSubmitContentProps) => {
   const { createContent } = useContent();
 
-  const handleSubmit = useCallback(async (status: 'draft' | 'published') => {
-    setIsLoading(true);
-    try {
-      await createContent(title, content, status);
-      alert(`Content ${status === 'draft' ? 'saved as draft' : 'published'} successfully!`);
-      setTitle('');
-      setContent('');
-    } catch (error) {
-      console.error('Error creating content:', error);
-      alert('Failed to create content');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [title, content, createContent, setTitle, setContent, setIsLoading]);
+  const handleSubmit = useCallback(
+    async (status: "draft" | "published") => {
+      setIsLoading(true);
+      try {
+        await createContent(title, content, status);
+        alert(
+          `Content ${
+            status === "draft" ? "saved as draft" : "published"
+          } successfully!`
+        );
+        setTitle("");
+        setContent("");
+      } catch (error) {
+        console.error("Error creating content:", error);
+        alert("Failed to create content");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [title, content, createContent, setTitle, setContent, setIsLoading]
+  );
 
   return { handleSubmit };
 };

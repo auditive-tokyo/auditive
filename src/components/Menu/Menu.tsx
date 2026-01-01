@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useSprings } from 'react-spring';
-import { useAuth } from '../../auth/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 import { DropResult } from '@hello-pangea/dnd';
 import { MenuOption, MenuProps, MenuItem } from './types';
 import { useMenuItems } from './hooks/useMenuItems';

@@ -1,6 +1,6 @@
-import React from 'react';
-import { useAuth } from './AuthContext';
-import Login from '../components/Content/Login/Login';
+import React from "react";
+import { useAuth } from "./AuthContext";
+import Login from "@/components/Content/Login/Login";
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -8,7 +8,7 @@ interface PrivateRouteProps {
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuth();
-  
+
   return isAuthenticated ? <>{children}</> : <Login />;
 };
 

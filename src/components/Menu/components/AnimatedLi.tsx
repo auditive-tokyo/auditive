@@ -10,7 +10,6 @@ export const AnimatedLi = animated.li as unknown as React.FC<
       opacity?: SpringValue<number>;
       y?: SpringValue<number>;
       color?: SpringValue<string>;
-      [key: string]: SpringValue<any> | undefined;
     }
   }
 >;

@@ -1,11 +1,11 @@
-import { client } from '../lib/amplify';
-import { Content } from '../types/content';
+import { client } from "@/lib/amplify";
+import { Content } from "@/types/content";
 
 export const useContent = () => {
   const createContent = async (
-    title: string, 
-    content: string, 
-    status: 'draft' | 'published' = 'draft'
+    title: string,
+    content: string,
+    status: "draft" | "published" = "draft"
   ) => {
     try {
       const now = new Date().toISOString(); // ISO 8601 UTC format: YYYY-MM-DDTHH:mm:ss.sssZ
@@ -26,34 +26,39 @@ export const useContent = () => {
             title,
             content,
             status: status.toUpperCase(),
-            createdAt: now
-          }
-        }
+            createdAt: now,
+          },
+        },
       });
-      
+
       // Type guard to ensure result has data property
-      if ('data' in result) {
+      if ("data" in result) {
         return result.data.createContent as Content;
       }
-      
-      throw new Error('Invalid GraphQL result format');
+
+      throw new Error("Invalid GraphQL result format");
     } catch (error) {
-      console.error('Error creating content:', error);
+      console.error("Error creating content:", error);
       throw error;
     }
   };
 
-  const updateContent = async (id: string, content: string, status: string, title?: string) => {
+  const updateContent = async (
+    id: string,
+    content: string,
+    status: string,
+    title?: string
+  ) => {
     try {
       // まず既存のコンテンツを取得して、タイトルを保持する
-      let originalTitle = '';
+      let originalTitle = "";
       try {
         const existingContent = await getContent(id);
         originalTitle = existingContent.title;
       } catch (error) {
-        console.error('Could not fetch original content:', error);
+        console.error("Could not fetch original content:", error);
       }
-      
+
       const result = await client.graphql({
         query: `
           mutation UpdateContent($input: UpdateContentInput!) {
@@ -71,19 +76,19 @@ export const useContent = () => {
             id,
             content,
             status,
-            title: title || originalTitle // 引数でタイトルが指定されていればそれを使用、なければ元のタイトルを使用
-          }
-        }
+            title: title || originalTitle, // 引数でタイトルが指定されていればそれを使用、なければ元のタイトルを使用
+          },
+        },
       });
-  
+
       // Type guard to ensure result has data property
-      if ('data' in result) {
+      if ("data" in result) {
         return result.data.updateContent as Content;
       }
-  
-      throw new Error('Invalid GraphQL result format');
+
+      throw new Error("Invalid GraphQL result format");
     } catch (error) {
-      console.error('Detailed error:', JSON.stringify(error, null, 2));
+      console.error("Detailed error:", JSON.stringify(error, null, 2));
       throw error;
     }
   };
@@ -103,17 +108,17 @@ export const useContent = () => {
             }
           }
         `,
-        variables: { id }
+        variables: { id },
       });
 
       // Type guard to ensure result has data property
-      if ('data' in result) {
+      if ("data" in result) {
         return result.data.getContent as Content;
       }
 
-      throw new Error('Invalid GraphQL result format');
+      throw new Error("Invalid GraphQL result format");
     } catch (error) {
-      console.error('Error fetching content:', error);
+      console.error("Error fetching content:", error);
       throw error;
     }
   };
@@ -134,17 +139,17 @@ export const useContent = () => {
               }
             }
           }
-        `
+        `,
       });
 
       // Type guard to ensure result has data property
-      if ('data' in result) {
+      if ("data" in result) {
         return result.data.listContents.items as Content[];
       }
 
-      throw new Error('Invalid GraphQL result format');
+      throw new Error("Invalid GraphQL result format");
     } catch (error) {
-      console.error('Error fetching contents:', error);
+      console.error("Error fetching contents:", error);
       throw error;
     }
   };
@@ -161,19 +166,19 @@ export const useContent = () => {
         `,
         variables: {
           input: {
-            id
-          }
-        }
+            id,
+          },
+        },
       });
 
       // Type guard to ensure result has data property
-      if ('data' in result) {
+      if ("data" in result) {
         return result.data.deleteContent.id;
       }
 
-      throw new Error('Invalid GraphQL result format');
+      throw new Error("Invalid GraphQL result format");
     } catch (error) {
-      console.error('Error deleting content:', error);
+      console.error("Error deleting content:", error);
       throw error;
     }
   };
@@ -183,6 +188,6 @@ export const useContent = () => {
     updateContent,
     getContent,
     getAllContents,
-    deleteContent // Add this to the returned object
+    deleteContent, // Add this to the returned object
   };
 };
