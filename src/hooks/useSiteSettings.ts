@@ -11,7 +11,7 @@ interface UpdateSiteConfigVariables {
 export const useSiteSettings = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [siteConfig, setSiteConfig] = useState<SiteConfig | null>(null);
-  const [defaultPageId, setDefaultPageId] = useState<string>("contact"); // 初期値
+  const [defaultPageId, setDefaultPageId] = useState<string | null>(null); // nullで開始
 
   // サイト設定を更新する（内部用）
   const updateSiteConfigInternal = useCallback(
