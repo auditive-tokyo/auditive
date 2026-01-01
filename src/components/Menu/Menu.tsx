@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { useSprings } from 'react-spring';
+import { useSprings } from '@react-spring/web';
 import { useAuth } from '@/auth/AuthContext';
 import { DropResult } from '@hello-pangea/dnd';
 import { MenuOption, MenuProps, MenuItem } from './types';

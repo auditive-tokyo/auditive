@@ -1,6 +1,5 @@
 import React from 'react';
-import { animated } from 'react-spring';
-import { SpringValue } from 'react-spring';
+import { animated, SpringValue } from '@react-spring/web';
 
 // Animated list item with spring animations
 export const AnimatedLi = animated.li as unknown as React.FC<
