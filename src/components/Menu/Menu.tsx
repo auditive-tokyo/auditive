@@ -46,7 +46,7 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
 
   // Handle drag end
   const handleDragEnd = useCallback((result: DropResult) => {
-    const { destination, source, draggableId } = result;
+    const { destination, source } = result;
     
     // ドロップ先がない場合は何もしない
     if (!destination) {
@@ -90,12 +90,6 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
   const toggleReorderMode = useCallback(() => {
     setIsReorderMode(prev => !prev);
   }, []);
-
-  // Handle login click
-  const handleLoginClick = useCallback(() => {
-    onMenuClick('login');
-    setIsOpen(false);
-  }, [onMenuClick]);
 
   // Handle logout
   const handleLogout = useCallback(() => {
@@ -216,11 +210,10 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
             handleMenuClick={handleMenuClick}
             isAuthenticated={isAuthenticated}
             logout={handleLogout}
-            onLoginClick={handleLoginClick}
             onDeleteMenuItem={handleDeleteMenuItem}
-            onCreateParentMenu={handleCreateParentMenu} // 親メニュー作成ハンドラをpropsとして渡す
-            expandedParents={expandedParents} // 展開状態を渡す
-            publishedPages={publishedPages} // 全ての公開ページ情報を渡す
+            onCreateParentMenu={handleCreateParentMenu}
+            expandedParents={expandedParents}
+            publishedPages={publishedPages}
           />
         )}
       </div>

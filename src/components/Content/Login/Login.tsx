@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { useAuth } from "../../../auth/AuthContext";
 
-const Login: React.FC = () => {
+interface LoginProps {
+  onLoginSuccess?: () => void;
+}
+
+const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [apiKey, setApiKey] = useState("");
   const [error, setError] = useState("");
   const { login } = useAuth();
@@ -13,8 +17,11 @@ const Login: React.FC = () => {
       if (!success) {
         setError("Invalid API key");
       } else {
-        // ログイン成功時、単純にホームに戻す
-        // App.tsx のルーティングロジックがデフォルトページを適切に処理
+        // ログイン成功時のコールバック
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        }
+        // ハッシュをクリア
         window.location.hash = "";
       }
     } catch {

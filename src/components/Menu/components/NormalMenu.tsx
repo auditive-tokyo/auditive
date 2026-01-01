@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
+import { SpringValues } from '@react-spring/web';
 import { AnimatedLi } from './AnimatedLi';
 import { MenuItem, MenuOption } from '../types';
 
+interface MenuSpringProps {
+  transform: string;
+  opacity: number;
+  y: number;
+  color: string;
+}
+
 interface NormalMenuProps {
   menuItems: MenuItem[];
-  springs: any[];
+  springs: SpringValues<MenuSpringProps>[];
   activeMenu: MenuOption;
-  handleMenuClick: (menu: MenuOption, isParent?: boolean) => void; // 第2引数を追加
+  handleMenuClick: (menu: MenuOption, isParent?: boolean) => void;
   isAuthenticated: boolean;
   logout: () => void;
-  onLoginClick: () => void;
   onDeleteMenuItem: (pageId: string) => Promise<boolean>;
   onCreateParentMenu?: (name: string) => Promise<boolean>;
   expandedParents: Set<string>;
@@ -23,11 +30,10 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
   handleMenuClick,
   isAuthenticated,
   logout,
-  onLoginClick,
   onDeleteMenuItem,
   onCreateParentMenu,
-  expandedParents, // ここに追加
-  publishedPages    // ここに追加
+  expandedParents,
+  publishedPages
 }) => {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -264,24 +270,17 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
         </li>
       )}
       
-      {/* Login/Logout button */}
-      <li className="mt-8">
-        {isAuthenticated ? (
+      {/* Logout button - only shown when authenticated */}
+      {isAuthenticated && (
+        <li className="mt-8">
           <button
             onClick={logout}
             className="px-4 py-2 text-red-400 hover:text-red-300 transition-colors"
           >
             LOGOUT
           </button>
-        ) : (
-          <button
-            onClick={onLoginClick}
-            className="px-4 py-2 text-cyan-400 hover:text-cyan-300 transition-colors"
-          >
-            LOGIN
-          </button>
-        )}
-      </li>
+        </li>
+      )}
     </ul>
   );
 };
