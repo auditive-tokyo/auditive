@@ -36,7 +36,7 @@ Resources:
       FunctionName: auditive-contact-form
       CodeUri: ../lambda_functions/contact_form/
       Handler: app.lambda_handler
-      Runtime: python3.14
+      Runtime: python3.13
       Timeout: 30
       Environment:
         Variables:
