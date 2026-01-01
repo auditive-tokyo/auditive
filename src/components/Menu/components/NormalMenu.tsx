@@ -237,7 +237,7 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
                 type="text"
                 value={parentMenuName}
                 onChange={(e) => setParentMenuName(e.target.value)}
-                placeholder="親メニュー名"
+                placeholder="Parent menu name"
                 className="px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded focus:border-cyan-500 focus:outline-none"
               />
               <div className="flex gap-2">
@@ -246,7 +246,7 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
                   disabled={isCreatingParent || !parentMenuName.trim()}
                   className="px-3 py-1 bg-cyan-600 text-white rounded hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed"
                 >
-                  {isCreatingParent ? '作成中...' : '作成'}
+                  {isCreatingParent ? 'Creating...' : 'Create'}
                 </button>
                 <button
                   onClick={() => {
@@ -255,7 +255,7 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
                   }}
                   className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
                 >
-                  キャンセル
+                  Cancel
                 </button>
               </div>
             </div>
@@ -264,7 +264,7 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
               onClick={() => setShowParentMenuInput(true)}
               className="px-4 py-2 text-cyan-500 hover:text-cyan-400 transition-colors"
             >
-              親メニューを作成
+              Create Parent Menu
             </button>
           )}
         </li>

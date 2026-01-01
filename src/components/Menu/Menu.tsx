@@ -142,7 +142,7 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
     try {
       const success = await addChildToParent(parentId, childId);
       if (!success) {
-        alert('子ページの追加に失敗しました');
+        alert('Failed to add child page');
       }
       return success;
     } catch (error) {
@@ -156,7 +156,7 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
     try {
       const success = await removeChildFromParent(parentId, childId);
       if (!success) {
-        alert('子ページの削除に失敗しました');
+        alert('Failed to remove child page');
       }
       return success;
     } catch (error) {

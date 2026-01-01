@@ -37,7 +37,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
       await onRemoveChildFromParent(parentId, childId);
     } catch (error) {
       console.error('Error removing child page:', error);
-      alert('子ページの削除中にエラーが発生しました');
+      alert('An error occurred while removing child page');
     }
   };
 
@@ -126,7 +126,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
                         {/* 親メニューの場合、子ページリストを表示 */}
                         {item.isParent && (
                           <div className="mt-2 border-l-2 border-purple-500/50 pl-2">
-                            <p className="text-xs text-gray-400 mb-2 font-bold">子ページ:</p>
+                            <p className="text-xs text-gray-400 mb-2 font-bold">Child pages:</p>
                             
                             {/* 子ページがある場合はリスト表示 */}
                             {item.children && item.children.length > 0 ? (
@@ -137,33 +137,49 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
                                   return childPage ? (
                                     <div
                                       key={childId}
-                                      className="flex items-center justify-between py-1 px-2 
+                                      className={`flex items-center justify-between py-1 px-2 
                                                bg-gray-700/50 hover:bg-gray-700 
-                                               rounded text-sm border-l-2 border-cyan-500/50"
+                                               rounded text-sm border-l-2 
+                                               ${childId === defaultPageId ? 'border-amber-500' : 'border-cyan-500/50'}`}
                                     >
                                       <span>{childPage.label}</span>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleRemoveChildPage(item.name, childId);
-                                        }}
-                                        className="text-xs text-red-400 hover:text-red-300 hover:bg-gray-600 p-1 rounded ml-2"
-                                      >
-                                        削除
-                                      </button>
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onSetDefaultPage(childId);
+                                          }}
+                                          className={`text-xs px-1.5 py-0.5 rounded ${
+                                            childId === defaultPageId 
+                                              ? 'bg-amber-600 text-white' 
+                                              : 'bg-gray-600 hover:bg-amber-600 text-gray-300 hover:text-white'
+                                          }`}
+                                        >
+                                          {childId === defaultPageId ? 'Default' : 'Set'}
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveChildPage(item.name, childId);
+                                          }}
+                                          className="text-xs text-red-400 hover:text-red-300 hover:bg-gray-600 p-1 rounded"
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
                                     </div>
                                   ) : null;
                                 })}
                               </div>
                             ) : (
-                              <p className="text-xs text-gray-500 italic mb-2">子ページはまだありません</p>
+                              <p className="text-xs text-gray-500 italic mb-2">No child pages yet</p>
                             )}
                             
                             {/* 選択中のページを子ページに追加するボタン表示 */}
                             {selectedItemId && selectedItemId !== item.name && !item.children?.includes(selectedItemId) && (
                               <div className="mt-1 p-2 bg-purple-900/30 border border-purple-500/50 rounded">
                                 <p className="text-xs text-gray-300 mb-1">
-                                  選択中: {orderedPublishedPages.find(p => p.name === selectedItemId)?.label}
+                                  Selected: {orderedPublishedPages.find(p => p.name === selectedItemId)?.label}
                                 </p>
                                 <button
                                   onClick={() => {
@@ -172,7 +188,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
                                   }}
                                   className="text-xs bg-purple-700 hover:bg-purple-600 text-white px-2 py-1 rounded w-full"
                                 >
-                                  このページを子ページとして追加
+                                  Add as child page
                                 </button>
                               </div>
                             )}
@@ -182,7 +198,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
                         {/* 通常のページの場合で、選択中かつ親メニューがある場合 */}
                         {!item.isParent && selectedItemId === item.name && parentMenus.length > 0 && (
                           <div className="mt-2 border-l-2 border-cyan-500/50 pl-2">
-                            <p className="text-xs text-gray-400 mb-1">このページを追加できる親メニュー:</p>
+                            <p className="text-xs text-gray-400 mb-1">Add to parent menu:</p>
                             <div className="space-y-1 mb-2">
                               {parentMenus.filter(parent => !parent.children?.includes(item.name))
                                 .map(parent => (
@@ -197,7 +213,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
                                              rounded text-sm border-l-2 border-purple-500/50
                                              text-left"
                                   >
-                                    <span>{parent.label}の子ページに追加</span>
+                                    <span>Add to {parent.label}</span>
                                     <span className="text-xs">→</span>
                                   </button>
                                 ))}
@@ -247,7 +263,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
                     onClick={() => setSelectedItemId(null)}
                     className="px-4 py-2 bg-gray-600 text-white hover:bg-gray-500 rounded transition-colors"
                   >
-                    選択解除
+                    Deselect
                   </button>
                 )}
               </li>

@@ -1,5 +1,3 @@
-/// <reference types="vite/client" />
-
 import React, { useEffect, useRef, useState } from "react";
 
 // 動画の元サイズ
@@ -37,7 +35,7 @@ const BackgroundVideo: React.FC = () => {
     videos.forEach((video) => {
       video.muted = true;
       video.play().catch((error) => {
-        console.error("ビデオの再生に失敗しました:", error);
+        console.error("Failed to play video:", error);
       });
     });
 
