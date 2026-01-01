@@ -58,28 +58,29 @@ const BackgroundVideo: React.FC = () => {
   const totalVideos = grid.cols * grid.rows;
   const videoSrc = import.meta.env.BASE_URL + "videos/bg_noise.mp4";
 
-  // 繋ぎ目をぼかすためのマスクを生成（端だけフェード）
-  const FADE_SIZE = 10; // ぼかしのサイズ（px）
+  // Generate mask for seamless tile edges (gradual fade)
+  const FADE_SIZE = 80; // Fade distance in px
+  const EDGE_OPACITY = 0.85; // Opacity at the very edge (0.85 = 15% transparent)
   const getMaskStyle = (index: number) => {
     const col = index % grid.cols;
     const row = Math.floor(index / grid.cols);
 
-    // 各辺のフェード（端のセルは外側をフェードしない）
+    // Gradual fade from edge opacity to fully opaque
     const fadeLeft =
       col > 0
-        ? `linear-gradient(to right, transparent, black ${FADE_SIZE}px)`
+        ? `linear-gradient(to right, rgba(0,0,0,${EDGE_OPACITY}), black ${FADE_SIZE}px)`
         : null;
     const fadeRight =
       col < grid.cols - 1
-        ? `linear-gradient(to left, transparent, black ${FADE_SIZE}px)`
+        ? `linear-gradient(to left, rgba(0,0,0,${EDGE_OPACITY}), black ${FADE_SIZE}px)`
         : null;
     const fadeTop =
       row > 0
-        ? `linear-gradient(to bottom, transparent, black ${FADE_SIZE}px)`
+        ? `linear-gradient(to bottom, rgba(0,0,0,${EDGE_OPACITY}), black ${FADE_SIZE}px)`
         : null;
     const fadeBottom =
       row < grid.rows - 1
-        ? `linear-gradient(to top, transparent, black ${FADE_SIZE}px)`
+        ? `linear-gradient(to top, rgba(0,0,0,${EDGE_OPACITY}), black ${FADE_SIZE}px)`
         : null;
 
     const masks = [fadeLeft, fadeRight, fadeTop, fadeBottom].filter(Boolean);

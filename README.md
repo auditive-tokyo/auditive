@@ -1,64 +1,123 @@
-# React.js SPA Template for Music Websites
+# Auditive CMS
 
-This is a simple Single Page Application (SPA) built with React.js, automatically deployed to GitHub Pages. Originally created for AUDITIVE (Drum&Bass producer).
+A minimalist React CMS for developers who think in Markdown. Ship pages fast, manage content visually, skip the bloat.
 
-## Overview
+## ✨ Features
 
-This project serves as a template for creating a simple yet effective SPA using React.js. It's designed to be easily customizable with automated deployment, making it ideal for small to medium-sized music websites or similar projects.
+### Content Management
 
-## Features
+- **Markdown & HTML Support** — Write content in Markdown or use HTML tags (`<h>`, `<a>`, `<iframe>`, `<div>`, `<span>`)
+- **Live Preview** — See your changes in real-time before publishing
+- **Draft/Publish Workflow** — Save drafts and publish when ready
 
-- Built with React.js
-- Automated deployment to GitHub Pages via GitHub Actions
-- Responsive design
-- Easy to customize and extend
+### Menu System
 
-## Live Demo
+- **Drag & Drop Reordering** — Easily reorganize menu items
+- **Parent/Child Menus** — Create hierarchical navigation structures
+- **Default Page Selection** — Set any page as your homepage
 
-You can see this template in action at [https://auditive.tokyo/](https://auditive.tokyo/)
+### Security & Authentication
 
-## Getting Started
+- **AWS Cognito** — Secure authentication with Identity Pool
+- **IAM-based API Access** — Public read access without API key expiration concerns
 
-To use this template for your own project:
+### Admin Access
 
-1. Fork this repository
-2. Update the `homepage` in `package.json` to your GitHub Pages URL
-3. Customize the content and styling to fit your needs
-4. Push changes to the `develop` branch to trigger automatic deployment
+Access the admin login page at `/#fxxking-login`
 
-## Development
+## 🛠 Tech Stack
 
-To run the project locally:
+| Layer    | Technology                                   |
+| -------- | -------------------------------------------- |
+| Frontend | React 18, TypeScript, Vite                   |
+| Styling  | Tailwind CSS, @tailwindcss/typography        |
+| Backend  | AWS AppSync (GraphQL), DynamoDB, Lambda      |
+| Auth     | AWS Cognito Identity Pool (IAM)              |
+| Hosting  | GitHub Pages                                 |
+| CI/CD    | GitHub Actions, CloudFormation               |
 
-1. Clone your forked repository
-2. Run `npm install` to install dependencies
-3. Use `npm start` to run the app in development mode
+## 🚀 Getting Started
 
-## Automatic Deployment
+### Prerequisites
 
-This project is set up with GitHub Actions for automatic deployment:
+- Node.js 18+
+- AWS Account
 
-- Pushing to the `develop` branch triggers the build and deploy workflow
-- The app is automatically built and deployed to the `gh-pages` branch
+### Installation
 
-## Available Scripts
+```bash
+# Fork this repository, then clone your fork
+git clone https://github.com/yourusername/auditive.git
+cd auditive
 
-In the project directory, you can run:
+# Install dependencies
+npm install
 
-### `npm start`
+# Start development server
+npm run dev
+```
 
-Runs the app in development mode at [http://localhost:3000](http://localhost:3000)
+### GitHub Secrets
 
-This is useful for local development and testing before pushing changes.
+The following secrets are required for CI/CD pipeline:
 
-## Learn More
+| Secret | Description |
+| ------ | ----------- |
+| `AWS_ACCESS_KEY_ID` | AWS access key for deployment |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret access key |
+| `AWS_REGION` | AWS region (e.g., `ap-northeast-1`) |
+| `ADMIN_PASSWORD` | Password for admin page access |
+| `CONTACT_FORM_EMAIL` | Email address for contact form notifications |
+| `ZOHO_APP_PASSWORD` | Zoho SMTP app password |
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+> **Note:** AWS resources (AppSync, DynamoDB, Cognito, Lambda, etc.) are automatically provisioned via CloudFormation/SAM when the CI/CD pipeline runs.
 
-## Contributing
+## 📁 Project Structure
 
-Feel free to use this as a template for your own projects. If you have any suggestions or improvements, please open an issue or submit a pull request.
+```
+src/
+├── auth/           # Authentication context & routes
+├── components/
+│   ├── Content/    # Page creation, editing, display
+│   ├── Menu/       # Navigation system
+│   ├── BackgroundVideo/
+│   └── CyberCursor/  # Custom cursor effect
+├── hooks/          # Custom hooks (useContent, useSiteSettings)
+├── lib/amplify/    # AWS Amplify configuration
+└── types/          # TypeScript definitions
+```
 
-## License
+## 🎨 Creating Content
 
-This project is open source and available under the [MIT License](LICENSE).
+### Markdown Example
+
+```markdown
+## Section Title
+
+This is a paragraph with **bold** and _italic_ text.
+
+- List item 1
+- List item 2
+
+[Link text](https://example.com)
+```
+
+### HTML Example
+
+```html
+<div style="background: #1a1a1a; padding: 20px; border-radius: 8px;">
+  <iframe
+    src="https://w.soundcloud.com/player/..."
+    width="100%"
+    height="166"
+  ></iframe>
+</div>
+```
+
+## 📄 License
+
+[MIT License](LICENSE.md)
+
+## 🔗 Live Demo
+
+[https://auditive.tokyo/](https://auditive.tokyo/)

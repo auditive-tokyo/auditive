@@ -7,8 +7,8 @@ on:
     workflow_dispatch:
 
 jobs:
-  # CFN Deploy
-  deploy-appsync:
+  # SAM Deploy (Lambda)
+  deploy-lambda:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,49 +20,51 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-          
-      - name: Deploy AppSync with CloudFormation
-        run: |
-          aws cloudformation deploy \
-            --template-file infrastructure/appsync.yaml \
-            --stack-name auditive-appsync \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset
-            
-      - name: Get AppSync outputs and set environment
-        id: appsync-outputs
-        run: |
-          ENDPOINT=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" --output text)
-          IDENTITY_POOL_ID=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='IdentityPoolId'].OutputValue" --output text)
-          REGION=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='Region'].OutputValue" --output text)
-          
-          # 以下の値をファイルに保存
-          echo "ENDPOINT=${ENDPOINT}" > appsync-outputs.env
-          echo "IDENTITY_POOL_ID=${IDENTITY_POOL_ID}" >> appsync-outputs.env
-          echo "REGION=${REGION}" >> appsync-outputs.env
-
-      - name: Upload environment file
-        uses: actions/upload-artifact@v4
-        with:
-          name: appsync-outputs
-          path: appsync-outputs.env
-          retention-days: 1
-
-  # SAM Deploy
-  deploy-lambda:
-    runs-on: ubuntu-latest
-    needs: deploy-appsync
-    steps:
-      - name: Checkout contact form backend
-        uses: actions/checkout@v4
-        with:
-          repository: auditive-tokyo/contact_form_backend
-          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: "3.14"
+
+      - name: Install AWS SAM CLI
+        run: pip install aws-sam-cli
+
+      - name: SAM Build and Deploy
+        run: |
+          cd infrastructure
+          sam build -t lambda.yaml
+          sam deploy -t .aws-sam/build/template.yaml \
+            --no-confirm-changeset --no-fail-on-empty-changeset \
+            --stack-name auditive-lambda \
+            --resolve-s3 \
+            --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+              SenderEmail=${{ secrets.CONTACT_FORM_EMAIL }} \
+              ReceiverEmail=${{ secrets.CONTACT_FORM_EMAIL }} \
+              ZohoAppPassword=${{ secrets.ZOHO_APP_PASSWORD }}
+
+      - name: Get Lambda outputs
+        run: |
+          CONTACT_FORM_ARN=$(aws cloudformation describe-stacks \
+            --stack-name auditive-lambda \
+            --query "Stacks[0].Outputs[?OutputKey=='ContactFormFunctionArn'].OutputValue" \
+            --output text)
+          echo "CONTACT_FORM_ARN=${CONTACT_FORM_ARN}" > lambda-outputs.env
+
+      - name: Upload Lambda outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-outputs
+          path: lambda-outputs.env
+          retention-days: 1
+
+  # CFN Deploy (AppSync)
+  deploy-appsync:
+    runs-on: ubuntu-latest
+    needs: deploy-lambda
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -71,32 +73,44 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Install AWS SAM CLI
-        run: |
-          pip install aws-sam-cli
+      - name: Download Lambda outputs
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-outputs
 
-      - name: SAM Build and Deploy
+      - name: Load Lambda outputs
+        run: cat lambda-outputs.env >> $GITHUB_ENV
+
+      - name: Deploy AppSync with CloudFormation
         run: |
-          sam build
-          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset \
-            --stack-name auditive-contact-form \
-            --resolve-s3 \
-            --capabilities CAPABILITY_IAM \
+          aws cloudformation deploy \
+            --template-file infrastructure/appsync.yaml \
+            --stack-name auditive-appsync \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset \
             --parameter-overrides \
-            "ParameterKey=ApiId,ParameterValue=${CONTACT_FORM_API_GATEWAY_ID} \
-             ParameterKey=SenderEmail,ParameterValue=${CONTACT_FORM_EMAIL} \
-             ParameterKey=ReceiverEmail,ParameterValue=${CONTACT_FORM_EMAIL} \
-             ParameterKey=AppPassword,ParameterValue=${APP_PASSWORD} \
-             ParameterKey=RepositoryName,ParameterValue=${GITHUB_REPOSITORY#*/}"
-        env:
-          CONTACT_FORM_API_GATEWAY_ID: ${{ secrets.CONTACT_FORM_API_GATEWAY_ID }}
-          CONTACT_FORM_EMAIL: ${{ secrets.CONTACT_FORM_EMAIL }}
-          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+              ContactFormFunctionArn=${{ env.CONTACT_FORM_ARN }}
+
+      - name: Get AppSync outputs
+        run: |
+          ENDPOINT=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" --output text)
+          IDENTITY_POOL_ID=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='IdentityPoolId'].OutputValue" --output text)
+          REGION=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='Region'].OutputValue" --output text)
+          echo "ENDPOINT=${ENDPOINT}" > appsync-outputs.env
+          echo "IDENTITY_POOL_ID=${IDENTITY_POOL_ID}" >> appsync-outputs.env
+          echo "REGION=${REGION}" >> appsync-outputs.env
+
+      - name: Upload AppSync outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: appsync-outputs
+          path: appsync-outputs.env
+          retention-days: 1
 
   # Frontend Deploy
   build-and-deploy:
     runs-on: ubuntu-latest
-    needs: [deploy-appsync, deploy-lambda]
+    needs: deploy-appsync
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -104,7 +118,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Download environment file
         uses: actions/download-artifact@v4
@@ -112,15 +126,13 @@ jobs:
           name: appsync-outputs
 
       - name: Load environment variables
-        run: |
-          cat appsync-outputs.env >> $GITHUB_ENV
+        run: cat appsync-outputs.env >> $GITHUB_ENV
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build
         env:
-          VITE_CONTACT_FORM_API_URL: https://${{ secrets.CONTACT_FORM_API_GATEWAY_ID }}.execute-api.${{ secrets.AWS_REGION }}.amazonaws.com/auditive/contact
           VITE_APPSYNC_API_ENDPOINT: ${{ env.ENDPOINT }}
           VITE_COGNITO_IDENTITY_POOL_ID: ${{ env.IDENTITY_POOL_ID }}
           VITE_AWS_REGION: ${{ env.REGION }}

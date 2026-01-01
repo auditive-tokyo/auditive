@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { client } from '@/lib/amplify';
 
 const Contact: React.FC = () => {
   const [name, setName] = useState<string>('');
@@ -6,26 +7,28 @@ const Contact: React.FC = () => {
   const [message, setMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const apiUrl: string | undefined = import.meta.env.VITE_CONTACT_FORM_API_URL;
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!apiUrl) {
-      alert('API URL is not set. Please check your configuration.');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name, email, message })
+      const result = await client.graphql({
+        query: `
+          mutation SendContactForm($input: SendContactFormInput!) {
+            sendContactForm(input: $input) {
+              success
+              message
+            }
+          }
+        `,
+        variables: {
+          input: { name, email, message }
+        }
       });
-      if (response.ok) {
+
+      const response = (result as { data: { sendContactForm: { success: boolean; message: string } } }).data.sendContactForm;
+      
+      if (response.success) {
         alert('Message sent successfully!');
         setName('');
         setEmail('');

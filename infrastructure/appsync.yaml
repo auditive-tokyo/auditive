@@ -1,4 +1,10 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  ContactFormFunctionArn:
+    Type: String
+    Description: "Contact Form Lambda Function ARN"
+
 Resources:
   # ===========================================
   # AppSync API (AWS_IAM認証)
@@ -34,7 +40,7 @@ Resources:
     Properties:
       RoleName: AuditiveUnauthRole
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -48,7 +54,7 @@ Resources:
       Policies:
         - PolicyName: AuditiveAppSyncPublicAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
@@ -82,7 +88,7 @@ Resources:
         - AttributeName: id
           KeyType: HASH
       TableName: auditive-site-config
-      
+
   # GraphQLスキーマ定義
   AppSyncSchema:
     Type: AWS::AppSync::GraphQLSchema
@@ -205,11 +211,23 @@ Resources:
           menuOrder: [String]
         }
 
+        type ContactFormResponse {
+          success: Boolean!
+          message: String
+        }
+
+        input SendContactFormInput {
+          name: String!
+          email: String!
+          message: String!
+        }
+
         type Mutation {
           createContent(input: CreateContentInput!): Content
           updateContent(input: UpdateContentInput!): Content
           deleteContent(input: DeleteContentInput!): Content
           updateSiteConfig(id: ID!, defaultPageId: String, menuOrder: [String]): SiteConfig
+          sendContactForm(input: SendContactFormInput!): ContactFormResponse
         }
 
         type Query {
@@ -242,12 +260,44 @@ Resources:
         TableName: !Ref SiteConfigTable
         AwsRegion: !Ref AWS::Region
 
+  # Contact Form Lambda データソース
+  ContactFormDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Name: auditivecontactformlambda
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !GetAtt AppSyncLambdaRole.Arn
+      LambdaConfig:
+        LambdaFunctionArn: !Ref ContactFormFunctionArn
+
+  # AppSync用Lambda呼び出しロール
+  AppSyncLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AuditiveAppSyncLambdaRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: appsync.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambda
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !Ref ContactFormFunctionArn
+
   # AppSync用DynamoDB操作ロール
   AppSyncDynamoDBRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -255,7 +305,7 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
-        
+
   # リゾルバー定義
   GetContentResolver:
     Type: AWS::AppSync::Resolver
@@ -322,7 +372,7 @@ Resources:
         }
       ResponseMappingTemplate: |
         $util.toJson($ctx.result)
-        
+
   UpdateContentResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: AppSyncSchema
@@ -469,6 +519,26 @@ Resources:
             }
           }
         #end
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result)
+
+  # Contact Form リゾルバー
+  SendContactFormResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Mutation
+      FieldName: sendContactForm
+      DataSourceName: !GetAtt ContactFormDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "Invoke",
+          "payload": {
+            "arguments": $util.toJson($ctx.args.input)
+          }
+        }
       ResponseMappingTemplate: |
         $util.toJson($ctx.result)
 
