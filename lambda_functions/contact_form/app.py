@@ -39,7 +39,19 @@ def lambda_handler(event, context):
     print("Received event:", json.dumps(event))
 
     # IPアドレス取得（AppSync経由）
-    ip = event.get('identity', {}).get('sourceIp', 'unknown')
+    # AppSync Lambda Resolverでは request.headers からIPを取得
+    ip = 'unknown'
+    request_context = event.get('request', {})
+    headers = request_context.get('headers', {})
+    
+    # CloudFront/ALB経由の場合は x-forwarded-for を確認
+    if 'x-forwarded-for' in headers:
+        # x-forwarded-for は "client, proxy1, proxy2" 形式なので最初のIPを取得
+        ip = headers['x-forwarded-for'].split(',')[0].strip()
+    elif 'sourceIp' in event.get('identity', {}):
+        ip = event['identity']['sourceIp']
+    
+    print(f"Client IP: {ip}")
     
     # レートリミットチェック
     if not check_rate_limit(ip):
