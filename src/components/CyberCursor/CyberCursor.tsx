@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 
 const { sin, cos, PI, hypot, min, max } = Math;
 
-// NOSONAR - Used only for visual effects, not security-sensitive
+// ユーティリティ関数
 function rnd(x = 1, dx = 0) {
   return Math.random() * x + dx;
 }
