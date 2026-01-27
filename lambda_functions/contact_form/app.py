@@ -3,10 +3,17 @@ import json
 import time
 import smtplib
 import boto3
+from botocore.config import Config
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-dynamodb = boto3.resource('dynamodb')
+# Lambda向けにタイムアウトを設定
+boto3_config = Config(
+    connect_timeout=5,    # 接続タイムアウト: 5秒
+    read_timeout=30,      # 読み取りタイムアウト: 30秒
+    retries={'max_attempts': 3}  # リトライ回数
+)
+dynamodb = boto3.resource('dynamodb', config=boto3_config)
 
 RATE_LIMIT = 3  # 1分間に3回まで
 RATE_LIMIT_WINDOW = 60  # 60秒
