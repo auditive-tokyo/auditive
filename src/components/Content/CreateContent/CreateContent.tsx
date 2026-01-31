@@ -17,6 +17,8 @@ const CreateContent: React.FC = () => {
     handleSubmit,
   } = useCreateContent();
 
+  const isEditMode = !preview;
+
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setContent(newContent);
@@ -52,7 +54,7 @@ const CreateContent: React.FC = () => {
         <button
           onClick={() => setPreview(false)}
           className={`px-4 py-2 rounded ${
-            !preview ? "bg-cyan-500" : "bg-gray-700"
+            isEditMode ? "bg-cyan-500" : "bg-gray-700"
           }`}
         >
           Edit
@@ -67,7 +69,7 @@ const CreateContent: React.FC = () => {
         </button>
       </div>
 
-      {!preview ? (
+      {isEditMode ? (
         <form
           className="flex flex-col gap-4"
           onSubmit={(e) => e.preventDefault()}
