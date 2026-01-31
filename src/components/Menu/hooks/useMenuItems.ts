@@ -3,6 +3,13 @@ import { useContent } from "@/hooks/useContent";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { MenuItem } from "../types";
 
+// 親メニューかどうかを検証するヘルパー関数
+const isValidParentMenu = (
+  page: MenuItem | undefined,
+): page is MenuItem & { isParent: true } => {
+  return !!page && !!page.isParent;
+};
+
 export const useMenuItems = (isAuthenticated: boolean) => {
   const [dynamicPages, setDynamicPages] = useState<MenuItem[]>([]);
   const {
@@ -35,7 +42,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
             .filter(
               (content) =>
                 content.status === "PUBLISHED" ||
-                (isAuthenticated && content.status === "DRAFT")
+                (isAuthenticated && content.status === "DRAFT"),
             )
             .map(async (content) => {
               // コンテンツが親メニューかどうかを判定
@@ -64,7 +71,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
                 isParent: isParent,
                 children: children.length > 0 ? children : undefined,
               };
-            })
+            }),
         );
 
         setDynamicPages(dynamicMenuPages);
@@ -79,12 +86,12 @@ export const useMenuItems = (isAuthenticated: boolean) => {
   // Memoize filtered arrays
   const publishedPages = useMemo(
     () => dynamicPages.filter((page) => !page.isDraft),
-    [dynamicPages]
+    [dynamicPages],
   );
 
   const draftPages = useMemo(
     () => dynamicPages.filter((page) => page.isDraft),
-    [dynamicPages]
+    [dynamicPages],
   );
 
   // すべての子ページIDのコレクションを作成
@@ -102,7 +109,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
   const orderedPublishedPages = useMemo(() => {
     // 子ページでないページのみをフィルタリング
     const mainMenuPages = publishedPages.filter(
-      (page) => !allChildPages.has(page.name)
+      (page) => !allChildPages.has(page.name),
     );
 
     return [...mainMenuPages].sort((a, b) => {
@@ -142,7 +149,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
           ]
         : []),
     ],
-    [orderedPublishedPages, draftPages, isAuthenticated]
+    [orderedPublishedPages, draftPages, isAuthenticated],
   );
 
   // Function to update custom order
@@ -172,7 +179,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
 
       // Remove from local state
       setDynamicPages((prevPages) =>
-        prevPages.filter((page) => page.name !== pageId)
+        prevPages.filter((page) => page.name !== pageId),
       );
 
       // Update custom order if needed
@@ -203,7 +210,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
       await createContent(
         title, // 第1引数: title
         contentBody, // 第2引数: content (JSONとして親メニュー情報を格納)
-        "published" // 第3引数: status
+        "published", // 第3引数: status
       );
 
       // ローカルの状態を更新
@@ -219,13 +226,13 @@ export const useMenuItems = (isAuthenticated: boolean) => {
   // 親メニューに子ページを追加する関数
   const addChildToParent = async (
     parentId: string,
-    childId: string
+    childId: string,
   ): Promise<boolean> => {
     try {
       // 親メニューを見つける
       const parentPage = dynamicPages.find((page) => page.name === parentId);
 
-      if (!parentPage || !parentPage.isParent) {
+      if (!isValidParentMenu(parentPage)) {
         console.error("Parent menu not found or not a parent");
         return false;
       }
@@ -258,14 +265,16 @@ export const useMenuItems = (isAuthenticated: boolean) => {
         parentId,
         JSON.stringify(parentData),
         "PUBLISHED",
-        parentContent.title // 元のタイトルを渡す
+        parentContent.title, // 元のタイトルを渡す
       );
 
       // ローカル状態を更新
       setDynamicPages((prevPages) =>
         prevPages.map((page) =>
-          page.name === parentId ? { ...page, children: updatedChildren } : page
-        )
+          page.name === parentId
+            ? { ...page, children: updatedChildren }
+            : page,
+        ),
       );
 
       // ここからが変更部分: カスタム順序リストから削除
@@ -284,19 +293,19 @@ export const useMenuItems = (isAuthenticated: boolean) => {
   // 親メニューから子ページを削除する関数
   const removeChildFromParent = async (
     parentId: string,
-    childId: string
+    childId: string,
   ): Promise<boolean> => {
     try {
       // 親メニューを見つける
       const parentPage = dynamicPages.find((page) => page.name === parentId);
 
-      if (!parentPage || !parentPage.isParent || !parentPage.children) {
+      if (!isValidParentMenu(parentPage) || !parentPage.children) {
         return false;
       }
 
       // 子ページリストから削除
       const updatedChildren = parentPage.children.filter(
-        (id) => id !== childId
+        (id) => id !== childId,
       );
 
       // 親メニューのコンテンツを取得して更新
@@ -316,14 +325,16 @@ export const useMenuItems = (isAuthenticated: boolean) => {
         parentId,
         JSON.stringify(parentData),
         "PUBLISHED",
-        parentContent.title
+        parentContent.title,
       );
 
       // ローカル状態を更新
       setDynamicPages((prevPages) =>
         prevPages.map((page) =>
-          page.name === parentId ? { ...page, children: updatedChildren } : page
-        )
+          page.name === parentId
+            ? { ...page, children: updatedChildren }
+            : page,
+        ),
       );
 
       // 子ページをカスタム順序リストに戻す
@@ -332,7 +343,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
         (page) =>
           page.isParent &&
           page.name !== parentId &&
-          page.children?.includes(childId)
+          page.children?.includes(childId),
       );
 
       if (!isChildOfAnotherParent && !customOrder.includes(childId)) {
