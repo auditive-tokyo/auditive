@@ -250,6 +250,23 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
     e.stopPropagation();
     setConfirmDelete(null);
   };
+
+  // メニュー項目のclassNameを生成するヘルパー関数
+  const getMenuItemClassName = (item: MenuItem) => {
+    const baseClasses = 'relative px-4 py-2 text-menu';
+    const cursorClass = item.isSeparator ? 'cursor-default' : 'cursor-pointer';
+    const dynamicClass = item.isDynamic ? 'text-gray-300' : '';
+    const draftClass = item.isDraft && !item.isSeparator ? 'text-amber-400' : '';
+    const separatorClass = item.isSeparator ? 'text-gray-500 text-sm font-bold' : '';
+    const beforeClasses = 'before:absolute before:left-0 before:bottom-0 before:w-full before:h-[1px] before:bg-cyan-400 before:transform before:scale-x-0 before:transition-transform before:duration-300';
+    const hoverClass = item.isSeparator ? '' : 'hover:before:scale-x-100';
+    const activeClass = activeMenu === item.name && !item.isSeparator ? 'before:scale-x-100' : '';
+    
+    return `${baseClasses} ${cursorClass} ${dynamicClass} ${draftClass} ${separatorClass} ${beforeClasses} ${hoverClass} ${activeClass} group`;
+  };
+
+  // 展開アイコンを取得するヘルパー関数
+  const getExpandIcon = (itemName: string) => expandedParents.has(itemName) ? '▼' : '►';
   
   return (
     <ul className="h-full flex flex-col items-start pl-12 gap-4 pt-[120px]">
@@ -257,29 +274,14 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
         <React.Fragment key={item.name}>
           <AnimatedLi
             onClick={item.isSeparator ? undefined : () => handleMenuClick(item.name, item.isParent)}
-            className={`
-              relative px-4 py-2 
-              text-menu
-              ${!item.isSeparator ? 'cursor-pointer' : 'cursor-default'}
-              ${item.isDynamic ? 'text-gray-300' : ''}
-              ${item.isDraft && !item.isSeparator ? 'text-amber-400' : ''}
-              ${item.isSeparator ? 'text-gray-500 text-sm font-bold' : ''}
-              before:absolute before:left-0 before:bottom-0
-              before:w-full before:h-[1px]
-              before:bg-cyan-400
-              before:transform before:scale-x-0
-              before:transition-transform before:duration-300
-              ${!item.isSeparator ? 'hover:before:scale-x-100' : ''}
-              ${activeMenu === item.name && !item.isSeparator ? 'before:scale-x-100' : ''}
-              group
-            `}
+            className={getMenuItemClassName(item)}
             style={springs[index]}
           >
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
                 {item.isParent && (
                   <span className="mr-2 text-gray-400 transform transition-transform">
-                    {expandedParents.has(item.name) ? '▼' : '►'}
+                    {getExpandIcon(item.name)}
                   </span>
                 )}
                 <span>{item.label}</span>
