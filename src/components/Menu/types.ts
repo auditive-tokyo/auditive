@@ -1,7 +1,8 @@
-import { SpringValue } from "react-spring";
+import { SpringValue } from "@react-spring/web";
 
 // MenuOptionの型を更新して動的なIDを許可
-export type MenuOption = "contact" | "create" | "login" | string;
+// 静的メニュー("contact", "create", "login")と動的ページIDの両方を受け入れる
+export type MenuOption = string;
 
 // 静的なメニューオプションの定義
 export const VALID_MENU_OPTIONS: MenuOption[] = ["contact", "create", "login"];
