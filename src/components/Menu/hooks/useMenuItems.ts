@@ -10,6 +10,20 @@ const isValidParentMenu = (
   return !!page && !!page.isParent;
 };
 
+// 親メニューのコンテンツデータをパースするヘルパー関数
+interface ParentMenuData {
+  isParentMenu: boolean;
+  children: string[];
+}
+
+const parseParentMenuContent = (content: string | undefined): ParentMenuData => {
+  try {
+    return JSON.parse(content || "{}");
+  } catch {
+    return { isParentMenu: true, children: [] };
+  }
+};
+
 export const useMenuItems = (isAuthenticated: boolean) => {
   const [dynamicPages, setDynamicPages] = useState<MenuItem[]>([]);
   const {
@@ -27,6 +41,17 @@ export const useMenuItems = (isAuthenticated: boolean) => {
     setMenuOrder: setDbMenuOrder,
     setDefaultPage: setDbDefaultPage,
   } = useSiteSettings();
+
+  // 親メニューの子ページリストを更新するヘルパー関数
+  const updateParentChildren = (parentId: string, updatedChildren: string[]) => {
+    setDynamicPages((prevPages) =>
+      prevPages.map((page) =>
+        page.name === parentId
+          ? { ...page, children: updatedChildren }
+          : page,
+      ),
+    );
+  };
 
   // デフォルトページIDはDB値を直接使用（フォールバック付き）
   const defaultPageId = dbDefaultPageId || "contact";
@@ -250,14 +275,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
 
       // 親メニューのコンテンツを取得して更新
       const parentContent = await getContent(parentId);
-      let parentData;
-      try {
-        parentData = JSON.parse(parentContent.content || "{}");
-      } catch {
-        parentData = { isParentMenu: true, children: [] };
-      }
-
-      // 子ページリストを更新
+      const parentData = parseParentMenuContent(parentContent.content);
       parentData.children = updatedChildren;
 
       // Firestoreに保存（タイトルを指定せずに元のタイトルを維持）
@@ -265,17 +283,11 @@ export const useMenuItems = (isAuthenticated: boolean) => {
         parentId,
         JSON.stringify(parentData),
         "PUBLISHED",
-        parentContent.title, // 元のタイトルを渡す
+        parentContent.title,
       );
 
       // ローカル状態を更新
-      setDynamicPages((prevPages) =>
-        prevPages.map((page) =>
-          page.name === parentId
-            ? { ...page, children: updatedChildren }
-            : page,
-        ),
-      );
+      updateParentChildren(parentId, updatedChildren);
 
       // ここからが変更部分: カスタム順序リストから削除
       if (customOrder.includes(childId)) {
@@ -310,14 +322,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
 
       // 親メニューのコンテンツを取得して更新
       const parentContent = await getContent(parentId);
-      let parentData;
-      try {
-        parentData = JSON.parse(parentContent.content || "{}");
-      } catch {
-        parentData = { isParentMenu: true, children: [] };
-      }
-
-      // 子ページリストを更新
+      const parentData = parseParentMenuContent(parentContent.content);
       parentData.children = updatedChildren;
 
       // データベースに保存
@@ -329,13 +334,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
       );
 
       // ローカル状態を更新
-      setDynamicPages((prevPages) =>
-        prevPages.map((page) =>
-          page.name === parentId
-            ? { ...page, children: updatedChildren }
-            : page,
-        ),
-      );
+      updateParentChildren(parentId, updatedChildren);
 
       // 子ページをカスタム順序リストに戻す
       // ただし、他の親メニューの子ページになっていないことを確認
