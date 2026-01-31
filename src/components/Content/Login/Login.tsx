@@ -14,15 +14,15 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     e.preventDefault();
     try {
       const success = await login(apiKey);
-      if (!success) {
-        setError("Invalid API key");
-      } else {
+      if (success) {
         // ログイン成功時のコールバック
         if (onLoginSuccess) {
           onLoginSuccess();
         }
         // ハッシュをクリア
-        window.location.hash = "";
+        globalThis.location.hash = "";
+      } else {
+        setError("Invalid Password");
       }
     } catch {
       setError("An error occurred during login");
@@ -32,9 +32,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-black/50">
       <div className="max-w-md w-full bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-lg p-8">
-        <h2 className="mb-6 text-center">
-          Login
-        </h2>
+        <h2 className="mb-6 text-center">Login</h2>
         {error && (
           <div className="bg-red-500/50 backdrop-blur-sm text-white p-3 rounded mb-4">
             {error}
