@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, Plugin } from 'vite'
-import path from 'path'
+import path from 'node:path'
 
 // カスタムプラグインを作成して環境変数を注入
 function injectEnvPlugin(): Plugin {

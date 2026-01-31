@@ -39,7 +39,7 @@ const EditContent: React.FC<EditContentProps> = ({
         content.id,
         contentText,
         status,
-        title
+        title,
       );
       onComplete(updatedContent);
     } catch (error) {
@@ -57,7 +57,7 @@ const EditContent: React.FC<EditContentProps> = ({
         <button
           onClick={() => setPreview(false)}
           className={`px-4 py-2 rounded ${
-            !preview ? "bg-cyan-500" : "bg-gray-700"
+            preview ? "bg-gray-700" : "bg-cyan-500"
           }`}
         >
           Edit
@@ -72,7 +72,38 @@ const EditContent: React.FC<EditContentProps> = ({
         </button>
       </div>
 
-      {!preview ? (
+      {preview ? (
+        <div className="flex flex-col gap-4">
+          <div className="preview-content bg-gray-800 p-4 rounded">
+            <h1 className="mb-4">{title}</h1>
+            <div className="prose prose-invert max-w-none">
+              <ReactMarkdown
+                rehypePlugins={[rehypeRaw]}
+                remarkPlugins={[remarkGfm]}
+                components={markdownComponents}
+              >
+                {contentText}
+              </ReactMarkdown>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="flex-1 bg-cyan-500 text-white px-4 py-2 rounded disabled:bg-gray-700"
+            >
+              {isLoading ? "Saving..." : "Save Changes"}
+            </button>
+            <button
+              onClick={onCancel}
+              disabled={isLoading}
+              className="flex-1 bg-gray-600 text-white px-4 py-2 rounded disabled:bg-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
         <div className="flex flex-col gap-4">
           <input
             type="text"
@@ -96,37 +127,6 @@ const EditContent: React.FC<EditContentProps> = ({
                 &lt;h1&gt;
               </div>
             )}
-          </div>
-          <div className="flex gap-4">
-            <button
-              onClick={handleSubmit}
-              disabled={isLoading}
-              className="flex-1 bg-cyan-500 text-white px-4 py-2 rounded disabled:bg-gray-700"
-            >
-              {isLoading ? "Saving..." : "Save Changes"}
-            </button>
-            <button
-              onClick={onCancel}
-              disabled={isLoading}
-              className="flex-1 bg-gray-600 text-white px-4 py-2 rounded disabled:bg-gray-700"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          <div className="preview-content bg-gray-800 p-4 rounded">
-            <h1 className="mb-4">{title}</h1>
-            <div className="prose prose-invert max-w-none">
-              <ReactMarkdown
-                rehypePlugins={[rehypeRaw]}
-                remarkPlugins={[remarkGfm]}
-                components={markdownComponents}
-              >
-                {contentText}
-              </ReactMarkdown>
-            </div>
           </div>
           <div className="flex gap-4">
             <button

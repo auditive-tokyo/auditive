@@ -22,10 +22,10 @@ const App: React.FC = () => {
   // ハッシュ変更を監視
   useEffect(() => {
     const checkHash = () => {
-      if (window.location.hash === SECRET_LOGIN_HASH) {
+      if (globalThis.location.hash === SECRET_LOGIN_HASH) {
         setShowSecretLogin(true);
         // ハッシュをクリア（URLに残さない）
-        window.history.replaceState(null, "", window.location.pathname);
+        globalThis.history.replaceState(null, "", globalThis.location.pathname);
       }
     };
 
@@ -33,8 +33,8 @@ const App: React.FC = () => {
     checkHash();
 
     // ハッシュ変更を監視
-    window.addEventListener("hashchange", checkHash);
-    return () => window.removeEventListener("hashchange", checkHash);
+    globalThis.addEventListener("hashchange", checkHash);
+    return () => globalThis.removeEventListener("hashchange", checkHash);
   }, []);
 
   // 表示するメニュー: 選択済みならそれ、なければデフォルトページ
