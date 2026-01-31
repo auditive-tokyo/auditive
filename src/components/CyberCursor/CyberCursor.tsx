@@ -16,7 +16,7 @@ function lerp(a: number, b: number, t: number) {
 }
 
 function noise(x: number, y: number, t = 101) {
-  const w0 = sin(0.3 * x + 1.4 * t + 2.0 + 2.5 * sin(0.4 * y + -1.3 * t + 1.0));
+  const w0 = sin(0.3 * x + 1.4 * t + 2 + 2.5 * sin(0.4 * y + -1.3 * t + 1));
   const w1 = sin(0.2 * y + 1.5 * t + 2.8 + 2.3 * sin(0.5 * x + -1.2 * t + 0.5));
   return w0 + w1;
 }
@@ -97,8 +97,8 @@ interface Spider {
 // Spider を生成する関数
 function createSpider(ctx: CanvasRenderingContext2D): Spider {
   const pts: Point[] = many(333, () => ({
-    x: rnd(window.innerWidth),
-    y: rnd(window.innerHeight),
+    x: rnd(globalThis.innerWidth),
+    y: rnd(globalThis.innerHeight),
     len: 0,
     r: 0,
   }));
@@ -109,14 +109,14 @@ function createSpider(ctx: CanvasRenderingContext2D): Spider {
   }));
 
   const seed = rnd(100);
-  let tx = rnd(window.innerWidth);
-  let ty = rnd(window.innerHeight);
-  let x = rnd(window.innerWidth);
-  let y = rnd(window.innerHeight);
+  let tx = rnd(globalThis.innerWidth);
+  let ty = rnd(globalThis.innerHeight);
+  let x = rnd(globalThis.innerWidth);
+  let y = rnd(globalThis.innerHeight);
   const kx = rnd(0.8, 0.8);
   const ky = rnd(0.8, 0.8);
   const walkRadius = { x: rnd(50, 50), y: rnd(50, 50) };
-  const r = window.innerWidth / rnd(100, 150);
+  const r = globalThis.innerWidth / rnd(100, 150);
 
   return {
     follow(newX: number, newY: number) {
@@ -130,16 +130,16 @@ function createSpider(ctx: CanvasRenderingContext2D): Spider {
       const fx = tx + selfMoveX;
       const fy = ty + selfMoveY;
 
-      x += min(window.innerWidth / 100, (fx - x) / 10);
-      y += min(window.innerWidth / 100, (fy - y) / 10);
+      x += min(globalThis.innerWidth / 100, (fx - x) / 10);
+      y += min(globalThis.innerWidth / 100, (fy - y) / 10);
 
       let i = 0;
       pts.forEach((pt) => {
         const dx = pt.x - x;
         const dy = pt.y - y;
         const len = hypot(dx, dy);
-        let radius = min(2, window.innerWidth / len / 5);
-        const increasing = len < window.innerWidth / 10 && i++ < 8;
+        let radius = min(2, globalThis.innerWidth / len / 5);
+        const increasing = len < globalThis.innerWidth / 10 && i++ < 8;
         const dir = increasing ? 0.1 : -0.1;
         if (increasing) {
           radius *= 1.5;
@@ -156,8 +156,8 @@ const InteractiveSpider: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const spidersRef = useRef<Spider[]>([]);
   const mouseRef = useRef({
-    x: window.innerWidth / 2,
-    y: window.innerHeight / 2,
+    x: globalThis.innerWidth / 2,
+    y: globalThis.innerHeight / 2,
   });
 
   useEffect(() => {
@@ -176,8 +176,8 @@ const InteractiveSpider: React.FC = () => {
     // アニメーションループ
     let animationId: number;
     function animate(t: number) {
-      if (w !== window.innerWidth) w = canvas!.width = window.innerWidth;
-      if (h !== window.innerHeight) h = canvas!.height = window.innerHeight;
+      if (w !== globalThis.innerWidth) w = canvas!.width = globalThis.innerWidth;
+      if (h !== globalThis.innerHeight) h = canvas!.height = globalThis.innerHeight;
 
       ctx!.fillStyle = "transparent";
       ctx!.clearRect(0, 0, w, h);
@@ -199,12 +199,12 @@ const InteractiveSpider: React.FC = () => {
       mouseRef.current = { x: e.clientX, y: e.clientY };
     };
 
-    window.addEventListener("pointermove", handleMouseMove);
+    globalThis.addEventListener("pointermove", handleMouseMove);
 
     // クリーンアップ
     return () => {
       cancelAnimationFrame(animationId);
-      window.removeEventListener("pointermove", handleMouseMove);
+      globalThis.removeEventListener("pointermove", handleMouseMove);
     };
   }, []);
 
