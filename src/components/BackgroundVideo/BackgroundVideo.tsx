@@ -107,24 +107,28 @@ const BackgroundVideo: React.FC = () => {
           gridTemplateRows: `repeat(${grid.rows}, ${VIDEO_HEIGHT}px)`,
         }}
       >
-        {Array.from({ length: totalVideos }).map((_, index) => (
-          <video
-            key={index}
-            ref={(el) => {
-              videoRefs.current[index] = el;
-            }}
-            autoPlay
-            loop
-            muted
-            playsInline
-            width={VIDEO_WIDTH}
-            height={VIDEO_HEIGHT}
-            className="block"
-            style={getMaskStyle(index) as React.CSSProperties}
-          >
-            <source src={videoSrc} type="video/mp4" />
-          </video>
-        ))}
+        {Array.from({ length: totalVideos }).map((_, index) => {
+          const row = Math.floor(index / grid.cols);
+          const col = index % grid.cols;
+          return (
+            <video
+              key={`video-${row}-${col}`}
+              ref={(el) => {
+                videoRefs.current[index] = el;
+              }}
+              autoPlay
+              loop
+              muted
+              playsInline
+              width={VIDEO_WIDTH}
+              height={VIDEO_HEIGHT}
+              className="block"
+              style={getMaskStyle(index) as React.CSSProperties}
+            >
+              <source src={videoSrc} type="video/mp4" />
+            </video>
+          );
+        })}
       </div>
     </div>
   );
