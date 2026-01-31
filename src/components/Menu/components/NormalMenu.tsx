@@ -164,18 +164,12 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
                 if (!childItem) return null;
                 
                 return (
-                  <li
+                  <button
                     key={childId}
                     onClick={() => handleMenuClick(childId)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleMenuClick(childId);
-                      }
-                    }}
-                    role="menuitem"
-                    tabIndex={0}
+                    type="button"
                     className={`
+                      block w-full text-left
                       px-4 py-2 text-menu
                       cursor-pointer
                       text-gray-300 hover:text-white
@@ -228,7 +222,7 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
                         </div>
                       </div>
                     )}
-                  </li>
+                  </button>
                 );
               })}
             </div>

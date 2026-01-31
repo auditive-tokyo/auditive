@@ -101,12 +101,17 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
                           text-white w-[90%] flex flex-col
                         `}
                         data-id={item.name}
-                        onClick={() =>
-                          setSelectedItemId(
-                            item.name === selectedItemId ? null : item.name
-                          )
-                        }
                       >
+                        <button
+                          type="button"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          onClick={() =>
+                            setSelectedItemId(
+                              item.name === selectedItemId ? null : item.name
+                            )
+                          }
+                          aria-label={`Select ${item.label}`}
+                        />
                         <div className="flex items-center justify-between w-full">
                           <div className="flex items-center w-full">
                             {/* ドラッグハンドルを分けて明示 */}
