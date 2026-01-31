@@ -21,6 +21,62 @@ function noise(x: number, y: number, t = 101) {
   return w0 + w1;
 }
 
+// 描画ヘルパー関数
+function drawCircle(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number,
+) {
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, radius, radius, 0, 0, PI * 2);
+  ctx.fill();
+}
+
+function drawLine(
+  ctx: CanvasRenderingContext2D,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+) {
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+
+  many(100, (i) => {
+    const t = (i + 1) / 100;
+    const lx = lerp(x0, x1, t);
+    const ly = lerp(y0, y1, t);
+    const k = noise(lx / 5 + x0, ly / 5 + y0) * 2;
+    ctx.lineTo(lx + k, ly + k);
+  });
+
+  ctx.stroke();
+}
+
+interface PaintPtParams {
+  ctx: CanvasRenderingContext2D;
+  pt: Point;
+  pts2: AnchorPoint[];
+  x: number;
+  y: number;
+  r: number;
+}
+
+function paintPt({ ctx, pt, pts2, x, y, r }: PaintPtParams) {
+  pts2.forEach((pt2) => {
+    if (!pt.len) return;
+    drawLine(
+      ctx,
+      lerp(x + pt2.x * r, pt.x, pt.len * pt.len),
+      lerp(y + pt2.y * r, pt.y, pt.len * pt.len),
+      x + pt2.x * r,
+      y + pt2.y * r,
+    );
+  });
+  drawCircle(ctx, pt.x, pt.y, pt.r);
+}
+
 interface Point {
   x: number;
   y: number;
@@ -80,40 +136,6 @@ const InteractiveSpider: React.FC = () => {
       const walkRadius = { x: rnd(50, 50), y: rnd(50, 50) };
       const r = window.innerWidth / rnd(100, 150);
 
-      function drawCircle(cx: number, cy: number, radius: number) {
-        ctx!.beginPath();
-        ctx!.ellipse(cx, cy, radius, radius, 0, 0, PI * 2);
-        ctx!.fill();
-      }
-
-      function drawLine(x0: number, y0: number, x1: number, y1: number) {
-        ctx!.beginPath();
-        ctx!.moveTo(x0, y0);
-
-        many(100, (i) => {
-          const t = (i + 1) / 100;
-          const lx = lerp(x0, x1, t);
-          const ly = lerp(y0, y1, t);
-          const k = noise(lx / 5 + x0, ly / 5 + y0) * 2;
-          ctx!.lineTo(lx + k, ly + k);
-        });
-
-        ctx!.stroke();
-      }
-
-      function paintPt(pt: Point) {
-        pts2.forEach((pt2) => {
-          if (!pt.len) return;
-          drawLine(
-            lerp(x + pt2.x * r, pt.x, pt.len * pt.len),
-            lerp(y + pt2.y * r, pt.y, pt.len * pt.len),
-            x + pt2.x * r,
-            y + pt2.y * r,
-          );
-        });
-        drawCircle(pt.x, pt.y, pt.r);
-      }
-
       return {
         follow(newX: number, newY: number) {
           tx = newX;
@@ -142,7 +164,7 @@ const InteractiveSpider: React.FC = () => {
             }
             pt.r = radius;
             pt.len = max(0, min(pt.len + dir, 1));
-            paintPt(pt);
+            paintPt({ ctx, pt, pts2, x, y, r });
           });
         },
       };
