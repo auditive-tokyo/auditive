@@ -23,6 +23,13 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
+  // @hello-pangea/dnd uses refs in render props (library pattern)
+  {
+    files: ['src/components/Menu/components/ReorderMenu.tsx'],
+    rules: {
+      'react-hooks/refs': 'off',
+    },
+  },
   {
     ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.ts'],
   }
