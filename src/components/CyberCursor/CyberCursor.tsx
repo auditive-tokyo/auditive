@@ -94,6 +94,64 @@ interface Spider {
   tick: (t: number) => void;
 }
 
+// Spider を生成する関数
+function createSpider(ctx: CanvasRenderingContext2D): Spider {
+  const pts: Point[] = many(333, () => ({
+    x: rnd(window.innerWidth),
+    y: rnd(window.innerHeight),
+    len: 0,
+    r: 0,
+  }));
+
+  const pts2: AnchorPoint[] = many(9, (i) => ({
+    x: cos((i / 9) * PI * 2),
+    y: sin((i / 9) * PI * 2),
+  }));
+
+  const seed = rnd(100);
+  let tx = rnd(window.innerWidth);
+  let ty = rnd(window.innerHeight);
+  let x = rnd(window.innerWidth);
+  let y = rnd(window.innerHeight);
+  const kx = rnd(0.8, 0.8);
+  const ky = rnd(0.8, 0.8);
+  const walkRadius = { x: rnd(50, 50), y: rnd(50, 50) };
+  const r = window.innerWidth / rnd(100, 150);
+
+  return {
+    follow(newX: number, newY: number) {
+      tx = newX;
+      ty = newY;
+    },
+
+    tick(t: number) {
+      const selfMoveX = cos(t * kx + seed) * walkRadius.x;
+      const selfMoveY = sin(t * ky + seed) * walkRadius.y;
+      const fx = tx + selfMoveX;
+      const fy = ty + selfMoveY;
+
+      x += min(window.innerWidth / 100, (fx - x) / 10);
+      y += min(window.innerWidth / 100, (fy - y) / 10);
+
+      let i = 0;
+      pts.forEach((pt) => {
+        const dx = pt.x - x;
+        const dy = pt.y - y;
+        const len = hypot(dx, dy);
+        let radius = min(2, window.innerWidth / len / 5);
+        const increasing = len < window.innerWidth / 10 && i++ < 8;
+        const dir = increasing ? 0.1 : -0.1;
+        if (increasing) {
+          radius *= 1.5;
+        }
+        pt.r = radius;
+        pt.len = max(0, min(pt.len + dir, 1));
+        paintPt({ ctx, pt, pts2, x, y, r });
+      });
+    },
+  };
+}
+
 const InteractiveSpider: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const spidersRef = useRef<Spider[]>([]);
@@ -112,66 +170,8 @@ const InteractiveSpider: React.FC = () => {
     let w = 0;
     let h = 0;
 
-    // Spider を生成する関数
-    function spawn(): Spider {
-      const pts: Point[] = many(333, () => ({
-        x: rnd(window.innerWidth),
-        y: rnd(window.innerHeight),
-        len: 0,
-        r: 0,
-      }));
-
-      const pts2: AnchorPoint[] = many(9, (i) => ({
-        x: cos((i / 9) * PI * 2),
-        y: sin((i / 9) * PI * 2),
-      }));
-
-      const seed = rnd(100);
-      let tx = rnd(window.innerWidth);
-      let ty = rnd(window.innerHeight);
-      let x = rnd(window.innerWidth);
-      let y = rnd(window.innerHeight);
-      const kx = rnd(0.8, 0.8);
-      const ky = rnd(0.8, 0.8);
-      const walkRadius = { x: rnd(50, 50), y: rnd(50, 50) };
-      const r = window.innerWidth / rnd(100, 150);
-
-      return {
-        follow(newX: number, newY: number) {
-          tx = newX;
-          ty = newY;
-        },
-
-        tick(t: number) {
-          const selfMoveX = cos(t * kx + seed) * walkRadius.x;
-          const selfMoveY = sin(t * ky + seed) * walkRadius.y;
-          const fx = tx + selfMoveX;
-          const fy = ty + selfMoveY;
-
-          x += min(window.innerWidth / 100, (fx - x) / 10);
-          y += min(window.innerWidth / 100, (fy - y) / 10);
-
-          let i = 0;
-          pts.forEach((pt) => {
-            const dx = pt.x - x;
-            const dy = pt.y - y;
-            const len = hypot(dx, dy);
-            let radius = min(2, window.innerWidth / len / 5);
-            const increasing = len < window.innerWidth / 10 && i++ < 8;
-            const dir = increasing ? 0.1 : -0.1;
-            if (increasing) {
-              radius *= 1.5;
-            }
-            pt.r = radius;
-            pt.len = max(0, min(pt.len + dir, 1));
-            paintPt({ ctx, pt, pts2, x, y, r });
-          });
-        },
-      };
-    }
-
     // Spider を2体生成
-    spidersRef.current = many(2, spawn);
+    spidersRef.current = many(2, () => createSpider(ctx));
 
     // アニメーションループ
     let animationId: number;
