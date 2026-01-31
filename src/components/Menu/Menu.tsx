@@ -121,7 +121,7 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
   const handleCreateParentMenu = useCallback(async (name: string): Promise<boolean> => {
     try {
       const newParentMenu: MenuItem = {
-        name: name.toLowerCase().replace(/\s+/g, '-'),
+        name: name.toLowerCase().replaceAll(/\s+/g, '-'),
         label: name,
         isDynamic: true,
         isParent: true,
