@@ -4,6 +4,7 @@ import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { useContent } from "@/hooks/useContent";
 import { Content } from "@/types/content";
+import { markdownComponents, checkForH1 } from "../shared/markdownComponents";
 
 interface EditContentProps {
   content: Content;
@@ -26,12 +27,7 @@ const EditContent: React.FC<EditContentProps> = ({
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setContentText(newContent);
-
-    // h1タグまたは#で始まる行があるかチェック
-    const hasH1 =
-      newContent.toLowerCase().includes("<h1") ||
-      newContent.split("\n").some((line) => line.trim().startsWith("# "));
-    setShowWarning(hasH1);
+    setShowWarning(checkForH1(newContent));
   };
 
   const handleSubmit = async () => {
@@ -52,23 +48,6 @@ const EditContent: React.FC<EditContentProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const components = {
-    // CreateContentと同じコンポーネント定義
-    p: ({ children }) => {
-      if (
-        typeof children === "string" &&
-        (children.includes("<h") ||
-          children.includes("<a") ||
-          children.includes("<iframe") ||
-          children.includes("<div") ||
-          children.includes("<span"))
-      ) {
-        return <div dangerouslySetInnerHTML={{ __html: children }} />;
-      }
-      return <p>{children}</p>;
-    },
   };
 
   return (
@@ -143,7 +122,7 @@ const EditContent: React.FC<EditContentProps> = ({
               <ReactMarkdown
                 rehypePlugins={[rehypeRaw]}
                 remarkPlugins={[remarkGfm]}
-                components={components}
+                components={markdownComponents}
               >
                 {contentText}
               </ReactMarkdown>

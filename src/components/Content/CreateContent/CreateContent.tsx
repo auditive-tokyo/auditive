@@ -4,6 +4,7 @@ import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { useCreateContent } from "./hooks/useCreateContent";
 import { ActionButtons } from "./components/ActionButtons";
+import { markdownComponents, checkForH1 } from "../shared/markdownComponents";
 
 const CreateContent: React.FC = () => {
   const [preview, setPreview] = useState(false);
@@ -22,29 +23,7 @@ const CreateContent: React.FC = () => {
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setContent(newContent);
-
-    // h1タグまたは#で始まる行があるかチェック
-    const hasH1 =
-      newContent.toLowerCase().includes("<h1") ||
-      newContent.split("\n").some((line) => line.trim().startsWith("# "));
-    setShowWarning(hasH1);
-  };
-
-  const components = {
-    // divやiframeなどのHTMLをそのまま扱えるようにする
-    p: ({ children }) => {
-      if (
-        typeof children === "string" &&
-        (children.includes("<h") ||
-          children.includes("<a") ||
-          children.includes("<iframe") ||
-          children.includes("<div") ||
-          children.includes("<span"))
-      ) {
-        return <div dangerouslySetInnerHTML={{ __html: children }} />;
-      }
-      return <p>{children}</p>;
-    },
+    setShowWarning(checkForH1(newContent));
   };
 
   return (
@@ -107,7 +86,7 @@ const CreateContent: React.FC = () => {
               <ReactMarkdown
                 rehypePlugins={[rehypeRaw]}
                 remarkPlugins={[remarkGfm]}
-                components={components}
+                components={markdownComponents}
               >
                 {content}
               </ReactMarkdown>
