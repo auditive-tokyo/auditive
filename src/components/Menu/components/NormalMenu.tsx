@@ -167,6 +167,14 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
                   <li
                     key={childId}
                     onClick={() => handleMenuClick(childId)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleMenuClick(childId);
+                      }
+                    }}
+                    role="menuitem"
+                    tabIndex={0}
                     className={`
                       px-4 py-2 text-menu
                       cursor-pointer
