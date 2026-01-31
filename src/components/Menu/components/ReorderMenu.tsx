@@ -104,7 +104,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
                       >
                         <button
                           type="button"
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0"
                           onClick={() =>
                             setSelectedItemId(
                               item.name === selectedItemId ? null : item.name
@@ -112,7 +112,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
                           }
                           aria-label={`Select ${item.label}`}
                         />
-                        <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center justify-between w-full relative z-10">
                           <div className="flex items-center w-full">
                             {/* ドラッグハンドルを分けて明示 */}
                             <span
@@ -153,7 +153,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
 
                         {/* 親メニューの場合、子ページリストを表示 */}
                         {item.isParent && (
-                          <div className="mt-2 border-l-2 border-purple-500/50 pl-2">
+                          <div className="mt-2 border-l-2 border-purple-500/50 pl-2 relative z-10">
                             <p className="text-xs text-gray-400 mb-2 font-bold">
                               Child pages:
                             </p>
@@ -252,7 +252,7 @@ export const ReorderMenu: React.FC<ReorderMenuProps> = ({
                         {!item.isParent &&
                           selectedItemId === item.name &&
                           parentMenus.length > 0 && (
-                            <div className="mt-2 border-l-2 border-cyan-500/50 pl-2">
+                            <div className="mt-2 border-l-2 border-cyan-500/50 pl-2 relative z-10">
                               <p className="text-xs text-gray-400 mb-1">
                                 Add to parent menu:
                               </p>
