@@ -8,7 +8,7 @@ function rnd(x = 1, dx = 0) {
 }
 
 function many<T>(n: number, f: (i: number) => T): T[] {
-  return [...new Array(n)].map((_, i) => f(i));
+  return Array.from({ length: n }, (_, i) => f(i));
 }
 
 function lerp(a: number, b: number, t: number) {

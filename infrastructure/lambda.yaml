@@ -30,6 +30,13 @@ Resources:
         AttributeName: ttl
         Enabled: true
 
+  # Lambda用CloudWatch Log Group
+  ContactFormLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/auditive-contact-form
+      RetentionInDays: 30
+
   ContactFormFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -38,6 +45,8 @@ Resources:
       Handler: app.lambda_handler
       Runtime: python3.13
       Timeout: 30
+      LoggingConfig:
+        LogGroup: !Ref ContactFormLogGroup
       Environment:
         Variables:
           SENDER_EMAIL: !Ref SenderEmail
