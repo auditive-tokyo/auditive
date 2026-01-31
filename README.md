@@ -2,6 +2,10 @@
 
 A minimalist React CMS for developers who think in Markdown. Ship pages fast, manage content visually, skip the bloat.
 
+## 🔗 Live Demo
+
+[https://auditive.tokyo/](https://auditive.tokyo/)
+
 ## ✨ Features
 
 ### Content Management
@@ -27,14 +31,14 @@ Access the admin login page at `/#fxxking-login`
 
 ## 🛠 Tech Stack
 
-| Layer    | Technology                                   |
-| -------- | -------------------------------------------- |
-| Frontend | React 18, TypeScript, Vite                   |
-| Styling  | Tailwind CSS, @tailwindcss/typography        |
-| Backend  | AWS AppSync (GraphQL), DynamoDB, Lambda      |
-| Auth     | AWS Cognito Identity Pool (IAM)              |
-| Hosting  | GitHub Pages                                 |
-| CI/CD    | GitHub Actions, CloudFormation               |
+| Layer    | Technology                              |
+| -------- | --------------------------------------- |
+| Frontend | React 18, TypeScript, Vite              |
+| Styling  | Tailwind CSS, @tailwindcss/typography   |
+| Backend  | AWS AppSync (GraphQL), DynamoDB, Lambda |
+| Auth     | AWS Cognito Identity Pool (IAM)         |
+| Hosting  | GitHub Pages                            |
+| CI/CD    | GitHub Actions, CloudFormation          |
 
 ## 🚀 Getting Started
 
@@ -61,14 +65,14 @@ npm run dev
 
 The following secrets are required for CI/CD pipeline:
 
-| Secret | Description |
-| ------ | ----------- |
-| `AWS_ACCESS_KEY_ID` | AWS access key for deployment |
-| `AWS_SECRET_ACCESS_KEY` | AWS secret access key |
-| `AWS_REGION` | AWS region (e.g., `ap-northeast-1`) |
-| `ADMIN_PASSWORD` | Password for admin page access |
-| `CONTACT_FORM_EMAIL` | Email address for contact form notifications |
-| `ZOHO_APP_PASSWORD` | Zoho SMTP app password |
+| Secret                  | Description                                  |
+| ----------------------- | -------------------------------------------- |
+| `AWS_ACCESS_KEY_ID`     | AWS access key for deployment                |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret access key                        |
+| `AWS_REGION`            | AWS region (e.g., `ap-northeast-1`)          |
+| `ADMIN_PASSWORD`        | Password for admin page access               |
+| `CONTACT_FORM_EMAIL`    | Email address for contact form notifications |
+| `ZOHO_APP_PASSWORD`     | Zoho SMTP app password                       |
 
 > **Note:** AWS resources (AppSync, DynamoDB, Cognito, Lambda, etc.) are automatically provisioned via CloudFormation/SAM when the CI/CD pipeline runs.
 
@@ -117,7 +121,3 @@ This is a paragraph with **bold** and _italic_ text.
 ## 📄 License
 
 [MIT License](LICENSE.md)
-
-## 🔗 Live Demo
-
-[https://auditive.tokyo/](https://auditive.tokyo/)
