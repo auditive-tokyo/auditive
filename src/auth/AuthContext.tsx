@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -14,22 +14,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     () => localStorage.getItem('auth_token') !== null
   );
 
-  const login = async (password: string) => {
+  const login = useCallback(async (password: string) => {
     if (password === import.meta.env.VITE_ADMIN_PASSWORD) {
       localStorage.setItem('auth_token', 'authenticated');
       setIsAuthenticated(true);
       return true;
     }
     return false;
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('auth_token');
     setIsAuthenticated(false);
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({ isAuthenticated, login, logout }),
+    [isAuthenticated, login, logout]
+  );
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -55,21 +55,28 @@ const App: React.FC = () => {
     );
   }
 
+  // メインコンテンツをレンダリング
+  const renderContent = () => {
+    if (showSecretLogin) {
+      return <Login onLoginSuccess={() => setShowSecretLogin(false)} />;
+    }
+    if (activeMenu === "create") {
+      return (
+        <PrivateRoute>
+          <MainContent activeMenu={activeMenu} />
+        </PrivateRoute>
+      );
+    }
+    return <MainContent activeMenu={activeMenu} />;
+  };
+
   return (
     <AuthProvider>
       <div className="app-layout">
         <CyberCursor />
         <Header />
         <Menu activeMenu={activeMenu} onMenuClick={handleMenuClick} />
-        {showSecretLogin ? (
-          <Login onLoginSuccess={() => setShowSecretLogin(false)} />
-        ) : activeMenu === "create" ? (
-          <PrivateRoute>
-            <MainContent activeMenu={activeMenu} />
-          </PrivateRoute>
-        ) : (
-          <MainContent activeMenu={activeMenu} />
-        )}
+        {renderContent()}
         <Footer />
       </div>
     </AuthProvider>
