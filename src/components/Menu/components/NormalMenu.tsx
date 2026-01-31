@@ -10,6 +10,171 @@ interface MenuSpringProps {
   color: string;
 }
 
+// 削除確認ダイアログコンポーネント
+interface DeleteConfirmDialogProps {
+  label: string;
+  isDeleting: boolean;
+  onConfirm: (e: React.MouseEvent) => void;
+  onCancel: (e: React.MouseEvent) => void;
+}
+
+const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
+  label,
+  isDeleting,
+  onConfirm,
+  onCancel,
+}) => (
+  <div className="absolute left-full ml-2 top-0 bg-gray-800 p-3 rounded shadow-lg z-10 w-[200px]">
+    <p className="text-sm mb-2">Delete "{label}"?</p>
+    <div className="flex gap-2">
+      <button
+        onClick={onConfirm}
+        disabled={isDeleting}
+        className="px-2 py-1 bg-red-500 text-white text-xs rounded"
+      >
+        {isDeleting ? 'Deleting...' : 'Yes, delete'}
+      </button>
+      <button
+        onClick={onCancel}
+        className="px-2 py-1 bg-gray-600 text-white text-xs rounded"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+);
+
+// 削除ボタンコンポーネント
+interface DeleteButtonProps {
+  label: string;
+  onClick: (e: React.MouseEvent) => void;
+}
+
+const DeleteButton: React.FC<DeleteButtonProps> = ({ label, onClick }) => (
+  <button
+    onClick={onClick}
+    className="opacity-0 group-hover:opacity-100 w-5 h-5 ml-1 flex items-center justify-center rounded-full bg-red-500 text-white text-xs transition-opacity"
+    aria-label={`Delete ${label}`}
+  >
+    ✕
+  </button>
+);
+
+// 子メニュー項目コンポーネント
+interface ChildMenuItemProps {
+  childItem: MenuItem;
+  childId: string;
+  activeMenu: MenuOption;
+  isAuthenticated: boolean;
+  confirmDelete: string | null;
+  isDeleting: boolean;
+  onMenuClick: () => void;
+  onDeleteClick: (e: React.MouseEvent) => void;
+  onDeleteConfirm: (e: React.MouseEvent) => void;
+  onDeleteCancel: (e: React.MouseEvent) => void;
+}
+
+const ChildMenuItem: React.FC<ChildMenuItemProps> = ({
+  childItem,
+  childId,
+  activeMenu,
+  isAuthenticated,
+  confirmDelete,
+  isDeleting,
+  onMenuClick,
+  onDeleteClick,
+  onDeleteConfirm,
+  onDeleteCancel,
+}) => (
+  <button
+    onClick={onMenuClick}
+    type="button"
+    className={`
+      block w-full text-left
+      px-4 py-2 text-menu
+      cursor-pointer
+      text-gray-300 hover:text-white
+      ${activeMenu === childId ? 'text-cyan-400' : ''}
+      transition-colors duration-200
+      group relative
+    `}
+  >
+    <div className="flex items-center justify-between w-full">
+      <div className="flex items-center">
+        <span>{childItem.label}</span>
+      </div>
+      {isAuthenticated && (
+        <DeleteButton label={childItem.label} onClick={onDeleteClick} />
+      )}
+    </div>
+    {confirmDelete === childId && (
+      <DeleteConfirmDialog
+        label={childItem.label}
+        isDeleting={isDeleting}
+        onConfirm={onDeleteConfirm}
+        onCancel={onDeleteCancel}
+      />
+    )}
+  </button>
+);
+
+// 親メニュー作成UIコンポーネント
+interface ParentMenuCreatorProps {
+  showInput: boolean;
+  menuName: string;
+  isCreating: boolean;
+  onMenuNameChange: (value: string) => void;
+  onCreate: () => void;
+  onShowInput: () => void;
+  onCancel: () => void;
+}
+
+const ParentMenuCreator: React.FC<ParentMenuCreatorProps> = ({
+  showInput,
+  menuName,
+  isCreating,
+  onMenuNameChange,
+  onCreate,
+  onShowInput,
+  onCancel,
+}) => (
+  <li className="mt-4">
+    {showInput ? (
+      <div className="flex flex-col gap-2">
+        <input
+          type="text"
+          value={menuName}
+          onChange={(e) => onMenuNameChange(e.target.value)}
+          placeholder="Parent menu name"
+          className="px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded focus:border-cyan-500 focus:outline-none"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={onCreate}
+            disabled={isCreating || !menuName.trim()}
+            className="px-3 py-1 bg-cyan-600 text-white rounded hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed"
+          >
+            {isCreating ? 'Creating...' : 'Create'}
+          </button>
+          <button
+            onClick={onCancel}
+            className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ) : (
+      <button
+        onClick={onShowInput}
+        className="px-4 py-2 text-cyan-500 hover:text-cyan-400 transition-colors"
+      >
+        Create Parent Menu
+      </button>
+    )}
+  </li>
+);
+
 interface NormalMenuProps {
   menuItems: MenuItem[];
   springs: SpringValues<MenuSpringProps>[];
@@ -81,6 +246,11 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
     }
   };
   
+  const handleCancelDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConfirmDelete(null);
+  };
+  
   return (
     <ul className="h-full flex flex-col items-start pl-12 gap-4 pt-[120px]">
       {menuItems.map((item, index) => (
@@ -107,7 +277,6 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
           >
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
-                {/* 親メニュー項目の場合、展開/折りたたみアイコンを表示 */}
                 {item.isParent && (
                   <span className="mr-2 text-gray-400 transform transition-transform">
                     {expandedParents.has(item.name) ? '▼' : '►'}
@@ -117,46 +286,26 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
               </div>
 
               {isAuthenticated && item.isDynamic && (
-                <button
+                <DeleteButton
+                  label={item.label}
                   onClick={(e) => {
                     e.stopPropagation();
                     setConfirmDelete(item.name);
                   }}
-                  className="opacity-0 group-hover:opacity-100 w-5 h-5 ml-1 flex items-center justify-center rounded-full bg-red-500 text-white text-xs transition-opacity"
-                  aria-label={`Delete ${item.label}`}
-                >
-                  ✕
-                </button>
+                />
               )}
             </div>
             
-            {/* Delete confirmation dialog */}
             {confirmDelete === item.name && (
-              <div className="absolute left-full ml-2 top-0 bg-gray-800 p-3 rounded shadow-lg z-10 w-[200px]">
-                <p className="text-sm mb-2">Delete "{item.label}"?</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={(e) => handleDelete(e, item.name)}
-                    disabled={isDeleting}
-                    className="px-2 py-1 bg-red-500 text-white text-xs rounded"
-                  >
-                    {isDeleting ? 'Deleting...' : 'Yes, delete'}
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setConfirmDelete(null);
-                    }}
-                    className="px-2 py-1 bg-gray-600 text-white text-xs rounded"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
+              <DeleteConfirmDialog
+                label={item.label}
+                isDeleting={isDeleting}
+                onConfirm={(e) => handleDelete(e, item.name)}
+                onCancel={handleCancelDelete}
+              />
             )}
           </AnimatedLi>
           
-          {/* 親メニューが展開されている場合、子メニュー項目を表示 */}
           {item.isParent && item.children && expandedParents.has(item.name) && (
             <div className="ml-10 border-l-2 border-purple-500/30 pl-2 space-y-2">
               {item.children.map(childId => {
@@ -164,65 +313,22 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
                 if (!childItem) return null;
                 
                 return (
-                  <button
+                  <ChildMenuItem
                     key={childId}
-                    onClick={() => handleMenuClick(childId)}
-                    type="button"
-                    className={`
-                      block w-full text-left
-                      px-4 py-2 text-menu
-                      cursor-pointer
-                      text-gray-300 hover:text-white
-                      ${activeMenu === childId ? 'text-cyan-400' : ''}
-                      transition-colors duration-200
-                      group relative
-                    `}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center">
-                        <span>{childItem.label}</span>
-                      </div>
-                      
-                      {/* 子ページの削除ボタン */}
-                      {isAuthenticated && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmDelete(childId);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 w-5 h-5 ml-1 flex items-center justify-center rounded-full bg-red-500 text-white text-xs transition-opacity"
-                          aria-label={`Delete ${childItem.label}`}
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                    
-                    {/* 削除確認ダイアログ (子ページ用) */}
-                    {confirmDelete === childId && (
-                      <div className="absolute left-full ml-2 top-0 bg-gray-800 p-3 rounded shadow-lg z-10 w-[200px]">
-                        <p className="text-sm mb-2">Delete "{childItem.label}"?</p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={(e) => handleDelete(e, childId)}
-                            disabled={isDeleting}
-                            className="px-2 py-1 bg-red-500 text-white text-xs rounded"
-                          >
-                            {isDeleting ? 'Deleting...' : 'Yes, delete'}
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setConfirmDelete(null);
-                            }}
-                            className="px-2 py-1 bg-gray-600 text-white text-xs rounded"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </button>
+                    childItem={childItem}
+                    childId={childId}
+                    activeMenu={activeMenu}
+                    isAuthenticated={isAuthenticated}
+                    confirmDelete={confirmDelete}
+                    isDeleting={isDeleting}
+                    onMenuClick={() => handleMenuClick(childId)}
+                    onDeleteClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmDelete(childId);
+                    }}
+                    onDeleteConfirm={(e) => handleDelete(e, childId)}
+                    onDeleteCancel={handleCancelDelete}
+                  />
                 );
               })}
             </div>
@@ -230,49 +336,21 @@ export const NormalMenu: React.FC<NormalMenuProps> = ({
         </React.Fragment>
       ))}
       
-      {/* 親メニュー作成UI */}
       {isAuthenticated && (
-        <li className="mt-4">
-          {showParentMenuInput ? (
-            <div className="flex flex-col gap-2">
-              <input
-                type="text"
-                value={parentMenuName}
-                onChange={(e) => setParentMenuName(e.target.value)}
-                placeholder="Parent menu name"
-                className="px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded focus:border-cyan-500 focus:outline-none"
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={handleCreateParentMenu}
-                  disabled={isCreatingParent || !parentMenuName.trim()}
-                  className="px-3 py-1 bg-cyan-600 text-white rounded hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed"
-                >
-                  {isCreatingParent ? 'Creating...' : 'Create'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowParentMenuInput(false);
-                    setParentMenuName('');
-                  }}
-                  className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowParentMenuInput(true)}
-              className="px-4 py-2 text-cyan-500 hover:text-cyan-400 transition-colors"
-            >
-              Create Parent Menu
-            </button>
-          )}
-        </li>
+        <ParentMenuCreator
+          showInput={showParentMenuInput}
+          menuName={parentMenuName}
+          isCreating={isCreatingParent}
+          onMenuNameChange={setParentMenuName}
+          onCreate={handleCreateParentMenu}
+          onShowInput={() => setShowParentMenuInput(true)}
+          onCancel={() => {
+            setShowParentMenuInput(false);
+            setParentMenuName('');
+          }}
+        />
       )}
       
-      {/* Logout button - only shown when authenticated */}
       {isAuthenticated && (
         <li className="mt-8">
           <button
