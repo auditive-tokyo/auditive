@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useSprings } from '@react-spring/web';
 import { useAuth } from '@/auth/AuthContext';
 import { DropResult } from '@hello-pangea/dnd';
-import { MenuOption, MenuProps, MenuItem } from './types';
+import { MenuProps, MenuItem } from './types';
 import { useMenuItems } from './hooks/useMenuItems';
 import { MenuToggle } from './components/MenuToggle';
 import { MenuHeader } from './components/MenuHeader';
@@ -10,7 +10,6 @@ import { NormalMenu } from './components/NormalMenu';
 import { ReorderMenu } from './components/ReorderMenu';
 
 export { VALID_MENU_OPTIONS } from './types';
-export type { MenuOption } from './types';
 
 export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -74,7 +73,7 @@ export const Menu: React.FC<MenuProps> = ({ activeMenu, onMenuClick }) => {
   }, [orderedPublishedPages, updateCustomOrder]);
 
   // Menu item click handler
-  const handleMenuClick = useCallback((menu: MenuOption, isParent: boolean = false) => {
+  const handleMenuClick = useCallback((menu: string, isParent: boolean = false) => {
     if (isReorderMode) return;
     
     // 親メニューの場合は展開/折りたたみを切り替える

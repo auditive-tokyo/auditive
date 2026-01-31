@@ -1,14 +1,10 @@
 import { SpringValue } from "@react-spring/web";
 
-// MenuOptionの型を更新して動的なIDを許可
 // 静的メニュー("contact", "create", "login")と動的ページIDの両方を受け入れる
-export type MenuOption = string;
-
-// 静的なメニューオプションの定義
-export const VALID_MENU_OPTIONS: MenuOption[] = ["contact", "create", "login"];
+export const VALID_MENU_OPTIONS: string[] = ["contact", "create", "login"];
 
 export interface MenuItem {
-  name: MenuOption;
+  name: string;
   label: string;
   isDynamic?: boolean;
   isDraft?: boolean;
@@ -18,8 +14,8 @@ export interface MenuItem {
 }
 
 export interface MenuProps {
-  activeMenu: MenuOption;
-  onMenuClick: (menu: MenuOption) => void;
+  activeMenu: string;
+  onMenuClick: (menu: string) => void;
 }
 
 // Type for animated styles

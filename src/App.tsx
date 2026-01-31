@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import MainContent from "./components/MainContent";
-import { Menu, MenuOption } from "./components/Menu/Menu";
+import { Menu } from "./components/Menu/Menu";
 import { AuthProvider } from "./auth/AuthContext";
 import PrivateRoute from "./auth/PrivateRoute";
 import Login from "./components/Content/Login/Login";
@@ -15,7 +15,7 @@ const App: React.FC = () => {
   // DBからデフォルトページIDを取得
   const { defaultPageId, isLoading } = useSiteSettings();
   // selectedMenu: ユーザーが選択したメニュー（null = まだ選択していない）
-  const [selectedMenu, setSelectedMenu] = useState<MenuOption | null>(null);
+  const [selectedMenu, setSelectedMenu] = useState<string | null>(null);
   // シークレットログインハッシュを検知
   const [showSecretLogin, setShowSecretLogin] = useState(false);
 
@@ -38,9 +38,9 @@ const App: React.FC = () => {
   }, []);
 
   // 表示するメニュー: 選択済みならそれ、なければデフォルトページ
-  const activeMenu: MenuOption = selectedMenu ?? defaultPageId ?? "";
+  const activeMenu: string = selectedMenu ?? defaultPageId ?? "";
 
-  const handleMenuClick = (menu: MenuOption) => {
+  const handleMenuClick = (menu: string) => {
     setSelectedMenu(menu);
     // メニューをクリックしたらシークレットログインを閉じる
     setShowSecretLogin(false);

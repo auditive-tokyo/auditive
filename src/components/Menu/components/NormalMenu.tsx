@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SpringValues } from '@react-spring/web';
 import { AnimatedLi } from './AnimatedLi';
-import { MenuItem, MenuOption } from '../types';
+import { MenuItem } from '../types';
 
 interface MenuSpringProps {
   transform: string;
@@ -64,7 +64,7 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({ label, onClick }) => (
 interface ChildMenuItemProps {
   childItem: MenuItem;
   childId: string;
-  activeMenu: MenuOption;
+  activeMenu: string;
   isAuthenticated: boolean;
   confirmDelete: string | null;
   isDeleting: boolean;
@@ -178,8 +178,8 @@ const ParentMenuCreator: React.FC<ParentMenuCreatorProps> = ({
 interface NormalMenuProps {
   menuItems: MenuItem[];
   springs: SpringValues<MenuSpringProps>[];
-  activeMenu: MenuOption;
-  handleMenuClick: (menu: MenuOption, isParent?: boolean) => void;
+  activeMenu: string;
+  handleMenuClick: (menu: string, isParent?: boolean) => void;
   isAuthenticated: boolean;
   logout: () => void;
   onDeleteMenuItem: (pageId: string) => Promise<boolean>;

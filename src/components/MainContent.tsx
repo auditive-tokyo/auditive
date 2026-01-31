@@ -1,10 +1,9 @@
 import React from 'react';
 import BackgroundVideo from './BackgroundVideo/BackgroundVideo';
 import Content from './Content/Content';
-import { MenuOption } from './Menu/Menu'; 
 
 interface MainContentProps {
-  activeMenu: MenuOption;
+  activeMenu: string;
 }
 
 const MainContent: React.FC<MainContentProps> = ({ activeMenu }) => {

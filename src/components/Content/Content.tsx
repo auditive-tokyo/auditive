@@ -2,10 +2,10 @@ import React from 'react';
 import Contact from './Contact/Contact';
 import CreateContent from './CreateContent/CreateContent';
 import ShowContent from './ShowContent/ShowContent';
-import { MenuOption, VALID_MENU_OPTIONS } from '../Menu/Menu';
+import { VALID_MENU_OPTIONS } from '../Menu/Menu';
 
 interface ContentProps {
-  activeMenu: MenuOption;
+  activeMenu: string;
 }
 
 const Content: React.FC<ContentProps> = ({ activeMenu }) => {
