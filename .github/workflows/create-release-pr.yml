@@ -1,0 +1,41 @@
+name: Create Release PR
+
+on:
+  push:
+    branches:
+      - develop
+    paths-ignore:
+      - ".gitignore"
+      - "README.md"
+      - "LICENSE.md"
+      - "AGENTS.md"
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Get commit messages
+        id: commits
+        run: |
+          COMMITS=$(git log origin/production..HEAD --pretty=format:"- %s" --no-merges)
+          echo "COMMITS<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: production
+          branch: develop
+          title: "release: deploy to production"
+          body: |
+            ## Changes
+            ${{ steps.commits.outputs.COMMITS }}
+          labels: release
+          draft: false

@@ -1,0 +1,6 @@
+{
+    "sonarlint.connectedMode.project": {
+        "connectionId": "auditive-tokyo",
+        "projectKey": "auditive-tokyo_auditive"
+    }
+}
