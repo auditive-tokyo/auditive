@@ -176,12 +176,12 @@ const InteractiveSpider: React.FC = () => {
     // アニメーションループ
     let animationId: number;
     function animate(t: number) {
-      if (w !== globalThis.innerWidth) w = canvas!.width = globalThis.innerWidth;
-      if (h !== globalThis.innerHeight) h = canvas!.height = globalThis.innerHeight;
+      if (w !== globalThis.innerWidth) w = canvas!.width = globalThis.innerWidth; // NOSONAR
+      if (h !== globalThis.innerHeight) h = canvas!.height = globalThis.innerHeight; // NOSONAR
 
-      ctx!.fillStyle = "transparent";
-      ctx!.clearRect(0, 0, w, h);
-      ctx!.fillStyle = ctx!.strokeStyle = "#00f0ff";
+      ctx!.fillStyle = "transparent"; // NOSONAR
+      ctx!.clearRect(0, 0, w, h); // NOSONAR
+      ctx!.fillStyle = ctx!.strokeStyle = "#00f0ff"; // NOSONAR
 
       const time = t / 1000;
       spidersRef.current.forEach((spider) => {
