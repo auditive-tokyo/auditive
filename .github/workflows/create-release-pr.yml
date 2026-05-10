@@ -42,8 +42,7 @@ jobs:
               --base production \
               --head develop \
               --title "$TODAY" \
-              --body "$BODY_WITH_MARKER" \
-              --label release
+              --body "$BODY_WITH_MARKER"
           else
             PR_NUMBER=$(echo "$EXISTING" | jq -r '.number')
             PR_TITLE=$(echo "$EXISTING" | jq -r '.title')
