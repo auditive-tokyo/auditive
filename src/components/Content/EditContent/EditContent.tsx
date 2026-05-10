@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
-import { contentsApi } from "@/api/Content";
+import { updateContent } from "@/api/Content";
 import { Content } from "@/types";
 import { markdownComponents, checkForH1 } from "../shared/markdownComponents";
 
@@ -22,7 +22,6 @@ const EditContent: React.FC<EditContentProps> = ({
   const [preview, setPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
-  const { updateContent } = contentsApi();
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;

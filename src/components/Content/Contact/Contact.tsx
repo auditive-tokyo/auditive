@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { client } from '@/lib/amplify';
+import React, { useState } from "react";
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const Contact: React.FC = () => {
-  const [name, setName] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [message, setMessage] = useState<string>('');
+  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -12,40 +13,30 @@ const Contact: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const result = await client.graphql({
-        query: `
-          mutation SendContactForm($input: SendContactFormInput!) {
-            sendContactForm(input: $input) {
-              success
-              message
-            }
-          }
-        `,
-        variables: {
-          input: { name, email, message }
-        }
+      const res = await fetch(`${BASE_URL}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, message }),
       });
 
-      const response = (result as { data: { sendContactForm: { success: boolean; message: string } } }).data.sendContactForm;
-      
-      if (response.success) {
-        alert('Message sent successfully!');
-        setName('');
-        setEmail('');
-        setMessage('');
-      } else {
-        alert('Failed to send message. Please try again.');
-      }
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+
+      alert("Message sent successfully!");
+      setName("");
+      setEmail("");
+      setMessage("");
     } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred. Please try again later.');
+      console.error("Error:", error);
+      alert("An error occurred. Please try again later.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="p-5 rounded-lg"> {/* 背景色を削除 */}
+    <div className="p-5 rounded-lg">
+      {" "}
+      {/* 背景色を削除 */}
       <h1 className="mb-4">Contact</h1>
       <p className="text-lg text-gray-300 mb-6">
         Contact us for collab, booking, or just to say hi!
@@ -97,7 +88,7 @@ const Contact: React.FC = () => {
           disabled={isLoading}
           className="flex items-center justify-center min-w-[120px] mx-auto py-3 px-5 bg-cyan-600 text-white rounded-md text-base transition-colors hover:bg-cyan-500 disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
         >
-          {isLoading ? 'Sending...' : 'Send'}
+          {isLoading ? "Sending..." : "Send"}
           {isLoading && (
             <span className="w-5 h-5 border-2 border-white border-t-2 border-t-transparent animate-spin ml-2"></span>
           )}

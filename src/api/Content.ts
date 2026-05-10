@@ -1,193 +1,59 @@
-import { client } from "@/lib/amplify";
 import { Content } from "@/types";
+import { requireAuthHeaders } from "./auth";
 
-export const contentsApi = () => {
-  const createContent = async (
-    title: string,
-    content: string,
-    status: "draft" | "published" = "draft",
-  ) => {
-    try {
-      const now = new Date().toISOString(); // ISO 8601 UTC format: YYYY-MM-DDTHH:mm:ss.sssZ
-      const result = await client.graphql({
-        query: `
-          mutation CreateContent($input: CreateContentInput!) {
-            createContent(input: $input) {
-              id
-              title
-              content
-              status
-              createdAt
-            }
-          }
-        `,
-        variables: {
-          input: {
-            title,
-            content,
-            status: status.toUpperCase(),
-            createdAt: now,
-          },
-        },
-      });
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-      // Type guard to ensure result has data property
-      if ("data" in result) {
-        return result.data.createContent as Content;
-      }
+export const createContent = async (
+  title: string,
+  content: string,
+  status: "draft" | "published" = "draft",
+): Promise<Content> => {
+  const headers = await requireAuthHeaders();
+  const res = await fetch(`${BASE_URL}/admin/contents`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ title, content, status: status.toUpperCase() }),
+  });
+  if (!res.ok) throw new Error(`Failed to create content: ${res.status}`);
+  return (await res.json()) as Content;
+};
 
-      throw new Error("Invalid GraphQL result format");
-    } catch (error) {
-      console.error("Error creating content:", error);
-      throw error;
-    }
-  };
+export const updateContent = async (
+  id: string,
+  content: string,
+  status: string,
+  title: string,
+): Promise<Content> => {
+  const headers = await requireAuthHeaders();
+  const res = await fetch(`${BASE_URL}/admin/contents/${id}`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ content, status, title }),
+  });
+  if (!res.ok) throw new Error(`Failed to update content: ${res.status}`);
+  return (await res.json()) as Content;
+};
 
-  const updateContent = async (
-    id: string,
-    content: string,
-    status: string,
-    title?: string,
-  ) => {
-    try {
-      // まず既存のコンテンツを取得して、タイトルを保持する
-      let originalTitle = "";
-      try {
-        const existingContent = await getContent(id);
-        originalTitle = existingContent.title;
-      } catch (error) {
-        console.error("Could not fetch original content:", error);
-      }
+export const deleteContent = async (id: string): Promise<string> => {
+  const headers = await requireAuthHeaders();
+  const res = await fetch(`${BASE_URL}/admin/contents/${id}`, {
+    method: "DELETE",
+    headers,
+  });
+  if (!res.ok) throw new Error(`Failed to delete content: ${res.status}`);
+  return id;
+};
 
-      const result = await client.graphql({
-        query: `
-          mutation UpdateContent($input: UpdateContentInput!) {
-            updateContent(input: $input) {
-              id
-              title
-              content
-              status
-              updatedAt
-            }
-          }
-        `,
-        variables: {
-          input: {
-            id,
-            content,
-            status,
-            title: title || originalTitle, // 引数でタイトルが指定されていればそれを使用、なければ元のタイトルを使用
-          },
-        },
-      });
+export const getAdminContent = async (id: string): Promise<Content> => {
+  const headers = await requireAuthHeaders();
+  const res = await fetch(`${BASE_URL}/admin/contents/${id}`, { headers });
+  if (!res.ok) throw new Error(`Failed to fetch content: ${res.status}`);
+  return (await res.json()) as Content;
+};
 
-      // Type guard to ensure result has data property
-      if ("data" in result) {
-        return result.data.updateContent as Content;
-      }
-
-      throw new Error("Invalid GraphQL result format");
-    } catch (error) {
-      console.error("Detailed error:", JSON.stringify(error, null, 2));
-      throw error;
-    }
-  };
-
-  const getContent = async (id: string) => {
-    try {
-      const result = await client.graphql({
-        query: `
-          query GetContent($id: ID!) {
-            getContent(id: $id) {
-              id
-              title
-              content
-              status
-              createdAt
-              updatedAt
-            }
-          }
-        `,
-        variables: { id },
-      });
-
-      // Type guard to ensure result has data property
-      if ("data" in result) {
-        return result.data.getContent as Content;
-      }
-
-      throw new Error("Invalid GraphQL result format");
-    } catch (error) {
-      console.error("Error fetching content:", error);
-      throw error;
-    }
-  };
-
-  const getAllContents = async () => {
-    try {
-      const result = await client.graphql({
-        query: `
-          query ListContents {
-            listContents {
-              items {
-                id
-                title
-                content
-                status
-                createdAt
-                updatedAt
-              }
-            }
-          }
-        `,
-      });
-
-      // Type guard to ensure result has data property
-      if ("data" in result) {
-        return result.data.listContents.items as Content[];
-      }
-
-      throw new Error("Invalid GraphQL result format");
-    } catch (error) {
-      console.error("Error fetching contents:", error);
-      throw error;
-    }
-  };
-
-  const deleteContent = async (id: string) => {
-    try {
-      const result = await client.graphql({
-        query: `
-          mutation DeleteContent($input: DeleteContentInput!) {
-            deleteContent(input: $input) {
-              id
-            }
-          }
-        `,
-        variables: {
-          input: {
-            id,
-          },
-        },
-      });
-
-      // Type guard to ensure result has data property
-      if ("data" in result) {
-        return result.data.deleteContent.id;
-      }
-
-      throw new Error("Invalid GraphQL result format");
-    } catch (error) {
-      console.error("Error deleting content:", error);
-      throw error;
-    }
-  };
-
-  return {
-    createContent,
-    updateContent,
-    getContent,
-    getAllContents,
-    deleteContent, // Add this to the returned object
-  };
+export const getAdminContents = async (): Promise<Content[]> => {
+  const headers = await requireAuthHeaders();
+  const res = await fetch(`${BASE_URL}/admin/contents`, { headers });
+  if (!res.ok) throw new Error(`Failed to fetch contents: ${res.status}`);
+  return (await res.json()) as Content[];
 };

@@ -2,7 +2,7 @@ export interface Content {
   id: string;
   title: string;
   content?: string;
-  status?: string;
+  status?: 'DRAFT' | 'PUBLISHED';
   createdAt?: string;
   updatedAt?: string;
 }

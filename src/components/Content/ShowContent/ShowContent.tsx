@@ -2,36 +2,48 @@ import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
-import { contentsApi } from "@/api/Content";
+import { getAdminContent } from "@/api/Content";
+import { getContent as getPublicContent } from "@/api/public";
 import { Content } from "@/types";
 import { useAuth } from "@/auth/AuthContext";
 import EditContent from "../EditContent/EditContent"; // 新しく作成する編集用コンポーネント
 
 interface ShowContentProps {
   id: string;
+  onNotFound?: () => void;
 }
 
-const ShowContent: React.FC<ShowContentProps> = ({ id }) => {
+const ShowContent: React.FC<ShowContentProps> = ({ id, onNotFound }) => {
   const [content, setContent] = useState<Content | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false); // 編集モードの状態管理
-  const { getContent } = contentsApi();
-  const { isAuthenticated } = useAuth(); // 認証状態を取得
+  const { isAuthenticated, isAuthLoading } = useAuth(); // 認証状態を取得
 
   useEffect(() => {
+    if (isAuthLoading) return; // auth初期化完了まで待つ
+
     const fetchContent = async () => {
+      setIsLoading(true);
+      setContent(null);
       try {
-        const data = await getContent(id);
+        const data = isAuthenticated
+          ? await getAdminContent(id)
+          : await getPublicContent(id);
         setContent(data);
       } catch (error) {
-        console.error("Error fetching content:", error);
+        if (!isAuthenticated && error instanceof Error && error.message.includes('404')) {
+          // DRAFT content is not publicly available - fall back silently
+          onNotFound?.();
+        } else {
+          console.error("Error fetching content:", error);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchContent();
-  }, [id, getContent]);
+  }, [id, isAuthenticated, isAuthLoading]);
 
   // 編集モードの切り替え
   const toggleEditMode = () => {
