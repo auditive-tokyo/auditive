@@ -12,7 +12,11 @@ on:
 
 jobs:
   create-pr:
+    name: Open PR to release
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
@@ -20,23 +24,40 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Get commit messages
-        id: commits
+      - name: Create or update PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMITS=$(git log origin/production..HEAD --pretty=format:"- %s" --no-merges)
-          echo "COMMITS<<EOF" >> $GITHUB_OUTPUT
-          echo "$COMMITS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          TODAY="Release $(date +%Y-%m-%d)"
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          base: production
-          branch: develop
-          title: "release: deploy to production"
-          body: |
-            ## Changes
-            ${{ steps.commits.outputs.COMMITS }}
-          labels: release
-          draft: false
+          git fetch origin production 2>/dev/null || true
+          CHANGELOG=$(git log origin/production..HEAD --pretty=format:"- %s" --no-merges)
+
+          MARKER="<!-- auto-changelog -->"
+          BODY_WITH_MARKER=$(printf '%s\n%s' "$CHANGELOG" "$MARKER")
+
+          EXISTING=$(gh pr list --base production --head develop --state open --json number,title,body --jq '.[0]')
+          if [ -z "$EXISTING" ]; then
+            gh pr create \
+              --base production \
+              --head develop \
+              --title "$TODAY" \
+              --body "$BODY_WITH_MARKER" \
+              --label release
+          else
+            PR_NUMBER=$(echo "$EXISTING" | jq -r '.number')
+            PR_TITLE=$(echo "$EXISTING" | jq -r '.title')
+            PR_BODY=$(echo "$EXISTING" | jq -r '.body')
+
+            if [ "$PR_TITLE" != "$TODAY" ]; then
+              gh pr edit "$PR_NUMBER" --title "$TODAY"
+              echo "PR #$PR_NUMBER title updated: '$PR_TITLE' → '$TODAY'"
+            fi
+
+            if echo "$PR_BODY" | grep -qF "$MARKER"; then
+              gh pr edit "$PR_NUMBER" --body "$BODY_WITH_MARKER"
+              echo "PR #$PR_NUMBER body updated (auto-changelog)"
+            else
+              echo "PR #$PR_NUMBER body was manually edited — skipping body update"
+            fi
+          fi
