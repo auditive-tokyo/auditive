@@ -268,11 +268,12 @@ class AppSyncStack(Stack):
             )
         )
 
-        cognito.CfnIdentityPoolRoleAttachment(
+        role_attachment = cognito.CfnIdentityPoolRoleAttachment(
             self, "IdentityPoolRoleAttachment",
             identity_pool_id=identity_pool.ref,
             roles={"unauthenticated": unauth_role.role_arn},
         )
+        role_attachment.override_logical_id("CognitoIdentityPoolRoleAttachment")
 
         # ── Outputs ──────────────────────────────────────────────────────────
         CfnOutput(
