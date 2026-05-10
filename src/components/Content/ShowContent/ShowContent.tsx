@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
-import { useContent } from "@/hooks/useContent";
-import { Content } from "@/types/content";
+import { contentsApi } from "@/api/Content";
+import { Content } from "@/types";
 import { useAuth } from "@/auth/AuthContext";
 import EditContent from "../EditContent/EditContent"; // 新しく作成する編集用コンポーネント
 
@@ -15,7 +15,7 @@ const ShowContent: React.FC<ShowContentProps> = ({ id }) => {
   const [content, setContent] = useState<Content | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false); // 編集モードの状態管理
-  const { getContent } = useContent();
+  const { getContent } = contentsApi();
   const { isAuthenticated } = useAuth(); // 認証状態を取得
 
   useEffect(() => {

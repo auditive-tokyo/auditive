@@ -1,11 +1,11 @@
 import { client } from "@/lib/amplify";
-import { Content } from "@/types/content";
+import { Content } from "@/types";
 
-export const useContent = () => {
+export const contentsApi = () => {
   const createContent = async (
     title: string,
     content: string,
-    status: "draft" | "published" = "draft"
+    status: "draft" | "published" = "draft",
   ) => {
     try {
       const now = new Date().toISOString(); // ISO 8601 UTC format: YYYY-MM-DDTHH:mm:ss.sssZ
@@ -47,7 +47,7 @@ export const useContent = () => {
     id: string,
     content: string,
     status: string,
-    title?: string
+    title?: string,
   ) => {
     try {
       // まず既存のコンテンツを取得して、タイトルを保持する

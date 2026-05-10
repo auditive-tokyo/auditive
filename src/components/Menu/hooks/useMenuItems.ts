@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useContent } from "@/hooks/useContent";
+import { contentsApi } from "@/api/Content";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { MenuItem } from "../types";
 
@@ -16,7 +16,9 @@ interface ParentMenuData {
   children: string[];
 }
 
-const parseParentMenuContent = (content: string | undefined): ParentMenuData => {
+const parseParentMenuContent = (
+  content: string | undefined,
+): ParentMenuData => {
   try {
     return JSON.parse(content || "{}");
   } catch {
@@ -32,7 +34,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
     createContent,
     getContent,
     updateContent,
-  } = useContent();
+  } = contentsApi();
 
   // サイト設定フックを使用
   const {
@@ -43,12 +45,13 @@ export const useMenuItems = (isAuthenticated: boolean) => {
   } = useSiteSettings();
 
   // 親メニューの子ページリストを更新するヘルパー関数
-  const updateParentChildren = (parentId: string, updatedChildren: string[]) => {
+  const updateParentChildren = (
+    parentId: string,
+    updatedChildren: string[],
+  ) => {
     setDynamicPages((prevPages) =>
       prevPages.map((page) =>
-        page.name === parentId
-          ? { ...page, children: updatedChildren }
-          : page,
+        page.name === parentId ? { ...page, children: updatedChildren } : page,
       ),
     );
   };

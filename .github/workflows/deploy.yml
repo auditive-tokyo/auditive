@@ -3,20 +3,21 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - develop
+      - production
     paths-ignore:
-      - '.gitignore'
-      - 'README.md'
-      - 'LICENSE.md'
+      - ".gitignore"
+      - "README.md"
+      - "LICENSE.md"
+      - "AGENTS.md"
   workflow_dispatch:
 
 jobs:
-  # SAM Deploy (Lambda)
-  deploy-lambda:
+  # CDK Deploy (Lambda + AppSync)
+  deploy-infrastructure:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4
@@ -30,73 +31,32 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install AWS SAM CLI
-        run: pip install aws-sam-cli
+      - name: Install CDK dependencies
+        run: |
+          npm install -g aws-cdk@2.253.1 --ignore-scripts # version pinned to match requirements.txt; --ignore-scripts is safe for the CDK CLI
+          cd cdk
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --only-binary :all: -r requirements.txt # NOSONAR: versions are pinned with == in requirements.txt; --only-binary prevents setup script execution
 
-      - name: SAM Build and Deploy
+      - name: CDK Bootstrap
+        run: |
+          cd cdk
+          source .venv/bin/activate
+          cdk bootstrap --no-previous-parameters
+
+      - name: CDK Deploy (all stacks)
         env:
           CONTACT_EMAIL: ${{ secrets.CONTACT_FORM_EMAIL }}
           ZOHO_PASSWORD: ${{ secrets.ZOHO_APP_PASSWORD }}
         run: |
-          cd infrastructure
-          sam build -t lambda.yaml
-          sam deploy -t .aws-sam/build/template.yaml \
-            --no-confirm-changeset --no-fail-on-empty-changeset \
-            --stack-name auditive-lambda \
-            --resolve-s3 \
-            --capabilities CAPABILITY_IAM \
-            --parameter-overrides \
-              SenderEmail="$CONTACT_EMAIL" \
-              ReceiverEmail="$CONTACT_EMAIL" \
-              ZohoAppPassword="$ZOHO_PASSWORD"
-
-      - name: Get Lambda outputs
-        run: |
-          CONTACT_FORM_ARN=$(aws cloudformation describe-stacks \
-            --stack-name auditive-lambda \
-            --query "Stacks[0].Outputs[?OutputKey=='ContactFormFunctionArn'].OutputValue" \
-            --output text)
-          echo "CONTACT_FORM_ARN=${CONTACT_FORM_ARN}" > lambda-outputs.env
-
-      - name: Upload Lambda outputs
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: lambda-outputs
-          path: lambda-outputs.env
-          retention-days: 1
-
-  # CFN Deploy (AppSync)
-  deploy-appsync:
-    runs-on: ubuntu-latest
-    needs: deploy-lambda
-    steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Download Lambda outputs
-        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
-        with:
-          name: lambda-outputs
-
-      - name: Load Lambda outputs
-        run: cat lambda-outputs.env >> $GITHUB_ENV
-
-      - name: Deploy AppSync with CloudFormation
-        run: |
-          aws cloudformation deploy \
-            --template-file infrastructure/appsync.yaml \
-            --stack-name auditive-appsync \
-            --capabilities CAPABILITY_NAMED_IAM \
+          cd cdk
+          source .venv/bin/activate
+          cdk deploy --all --require-approval never \
             --no-fail-on-empty-changeset \
-            --parameter-overrides \
-              ContactFormFunctionArn=${{ env.CONTACT_FORM_ARN }}
+            --parameters auditive-lambda:SenderEmail="$CONTACT_EMAIL" \
+            --parameters auditive-lambda:ReceiverEmail="$CONTACT_EMAIL" \
+            --parameters auditive-lambda:ZohoAppPassword="$ZOHO_PASSWORD"
 
       - name: Get AppSync outputs
         run: |
@@ -117,10 +77,10 @@ jobs:
   # Frontend Deploy
   build-and-deploy:
     runs-on: ubuntu-latest
-    needs: deploy-appsync
+    needs: deploy-infrastructure
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -136,7 +96,7 @@ jobs:
         run: cat appsync-outputs.env >> $GITHUB_ENV
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci # --ignore-scripts is intentionally omitted: postinstall scripts are required by esbuild (used internally by Vite)
 
       - name: Build
         env:

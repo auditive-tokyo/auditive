@@ -76,21 +76,6 @@ The following secrets are required for CI/CD pipeline:
 
 > **Note:** AWS resources (AppSync, DynamoDB, Cognito, Lambda, etc.) are automatically provisioned via CloudFormation/SAM when the CI/CD pipeline runs.
 
-## 📁 Project Structure
-
-```
-src/
-├── auth/           # Authentication context & routes
-├── components/
-│   ├── Content/    # Page creation, editing, display
-│   ├── Menu/       # Navigation system
-│   ├── BackgroundVideo/
-│   └── CyberCursor/  # Custom cursor effect
-├── hooks/          # Custom hooks (useContent, useSiteSettings)
-├── lib/amplify/    # AWS Amplify configuration
-└── types/          # TypeScript definitions
-```
-
 ## 🎨 Creating Content
 
 ### Markdown Example
@@ -117,7 +102,3 @@ This is a paragraph with **bold** and _italic_ text.
   ></iframe>
 </div>
 ```
-
-## 📄 License
-
-[MIT License](LICENSE.md)

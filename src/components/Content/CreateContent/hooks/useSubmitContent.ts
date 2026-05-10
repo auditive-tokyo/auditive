@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useContent } from "@/hooks/useContent";
+import { contentsApi } from "@/api/Content";
 
 interface UseSubmitContentProps {
   title: string;
@@ -16,7 +16,7 @@ export const useSubmitContent = ({
   setContent,
   setIsLoading,
 }: UseSubmitContentProps) => {
-  const { createContent } = useContent();
+  const { createContent } = contentsApi();
 
   const handleSubmit = useCallback(
     async (status: "draft" | "published") => {
@@ -26,7 +26,7 @@ export const useSubmitContent = ({
         alert(
           `Content ${
             status === "draft" ? "saved as draft" : "published"
-          } successfully!`
+          } successfully!`,
         );
         setTitle("");
         setContent("");
@@ -37,7 +37,7 @@ export const useSubmitContent = ({
         setIsLoading(false);
       }
     },
-    [title, content, createContent, setTitle, setContent, setIsLoading]
+    [title, content, createContent, setTitle, setContent, setIsLoading],
   );
 
   return { handleSubmit };

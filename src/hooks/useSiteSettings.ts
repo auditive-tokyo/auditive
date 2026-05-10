@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { client } from "@/lib/amplify";
-import { SiteConfig } from "@/types/content";
+import { SiteConfig } from "@/types";
 
 interface UpdateSiteConfigVariables {
   id: string;
@@ -49,7 +49,7 @@ export const useSiteSettings = () => {
 
       return result;
     },
-    []
+    [],
   );
 
   // サイト設定を取得する
@@ -104,7 +104,7 @@ export const useSiteSettings = () => {
         return false;
       }
     },
-    [updateSiteConfigInternal]
+    [updateSiteConfigInternal],
   );
 
   // デフォルトページIDを設定する
@@ -112,7 +112,7 @@ export const useSiteSettings = () => {
     async (pageId: string) => {
       return await updateSiteConfig("siteConfig", pageId);
     },
-    [updateSiteConfig]
+    [updateSiteConfig],
   );
 
   // メニュー順序を設定する
@@ -120,7 +120,7 @@ export const useSiteSettings = () => {
     async (menuOrder: string[]) => {
       return await updateSiteConfig("siteConfig", undefined, menuOrder);
     },
-    [updateSiteConfig]
+    [updateSiteConfig],
   );
 
   return {
