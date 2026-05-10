@@ -33,7 +33,7 @@ jobs:
 
       - name: Install CDK dependencies
         run: |
-          npm install -g aws-cdk@2.253.1 --ignore-scripts # version pinned to match requirements.txt; --ignore-scripts is safe for the CDK CLI
+          npm install -g aws-cdk --ignore-scripts # --ignore-scripts is safe for the CDK CLI
           cd cdk
           python -m venv .venv
           source .venv/bin/activate
