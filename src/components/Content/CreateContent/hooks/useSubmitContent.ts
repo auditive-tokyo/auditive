@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { contentsApi } from "@/api/Content";
+import { createContent } from "@/api/Content";
 
 interface UseSubmitContentProps {
   title: string;
@@ -16,8 +16,6 @@ export const useSubmitContent = ({
   setContent,
   setIsLoading,
 }: UseSubmitContentProps) => {
-  const { createContent } = contentsApi();
-
   const handleSubmit = useCallback(
     async (status: "draft" | "published") => {
       setIsLoading(true);
@@ -37,7 +35,7 @@ export const useSubmitContent = ({
         setIsLoading(false);
       }
     },
-    [title, content, createContent, setTitle, setContent, setIsLoading],
+    [title, content, setTitle, setContent, setIsLoading],
   );
 
   return { handleSubmit };

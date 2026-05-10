@@ -4,7 +4,7 @@ import os
 import aws_cdk as cdk
 
 from lambda_stack import LambdaStack
-from appsync_stack import AppSyncStack
+from apigw_stack import ApiGwStack
 
 app = cdk.App()
 
@@ -15,12 +15,13 @@ env = cdk.Environment(
 
 lambda_stack = LambdaStack(app, "auditive-lambda", env=env)
 
-appsync_stack = AppSyncStack(
+apigw_stack = ApiGwStack(
     app,
-    "auditive-appsync",
+    "auditive-apigw",
     contact_form_fn=lambda_stack.contact_form_fn,
+    content_crud_fn=lambda_stack.content_crud_fn,
     env=env,
 )
-appsync_stack.add_dependency(lambda_stack)
+apigw_stack.add_dependency(lambda_stack)
 
 app.synth()

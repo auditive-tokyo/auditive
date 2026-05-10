@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import uuid
 import smtplib
 import boto3
 from botocore.config import Config
@@ -17,6 +18,33 @@ dynamodb = boto3.resource('dynamodb', config=boto3_config)
 
 RATE_LIMIT = 3  # 1分間に3回まで
 RATE_LIMIT_WINDOW = 60  # 60秒
+
+ALLOWED_ORIGINS = [
+    'https://auditive-tokyo.github.io',
+    'https://auditive.tokyo',
+    'http://localhost:5173',
+]
+_DEFAULT_ORIGIN = ALLOWED_ORIGINS[0]
+_request_origin = _DEFAULT_ORIGIN
+
+
+def _get_allowed_origin(event):
+    headers = event.get('headers') or {}
+    origin = headers.get('origin') or headers.get('Origin', '')
+    return origin if origin in ALLOWED_ORIGINS else _DEFAULT_ORIGIN
+
+
+CORS_HEADERS = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': _DEFAULT_ORIGIN,
+}
+
+
+def _cors_headers():
+    return {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': _request_origin,
+    }
 
 def check_rate_limit(ip):
     """IPごとのレートリミットをチェック"""
@@ -42,36 +70,70 @@ def check_rate_limit(ip):
         print(f"Rate limit check error: {e}")
         return True  # エラー時は許可
 
+def save_contact_submission(name, email, message, ip):
+    """Save contact form submission to DynamoDB for record keeping."""
+    table_name = os.environ.get('CONTACT_TABLE')
+    if not table_name:
+        return
+    table = dynamodb.Table(table_name)
+    try:
+        table.put_item(Item={
+            'id': str(uuid.uuid4()),
+            'name': name,
+            'email': email,
+            'message': message,
+            'ip': ip,
+            'submittedAt': int(time.time()),
+        })
+    except Exception as e:
+        print(f"Failed to save contact submission: {e}")
+
+
 def lambda_handler(event, context):
+    global _request_origin
+    _request_origin = _get_allowed_origin(event)
+
     print("Received event:", json.dumps(event))
 
-    # IPアドレス取得（AppSync経由）
-    # AppSync Lambda Resolverでは request.headers からIPを取得
+    # IPアドレス取得（API Gateway形式）
     ip = 'unknown'
-    request_context = event.get('request', {})
-    headers = request_context.get('headers', {})
-    
-    # CloudFront/ALB経由の場合は x-forwarded-for を確認
-    if 'x-forwarded-for' in headers:
-        # x-forwarded-for は "client, proxy1, proxy2" 形式なので最初のIPを取得
-        ip = headers['x-forwarded-for'].split(',')[0].strip()
-    elif 'sourceIp' in event.get('identity', {}):
-        ip = event['identity']['sourceIp']
-    
+    try:
+        ip = event['requestContext']['identity']['sourceIp'] or 'unknown'
+    except (KeyError, TypeError):
+        pass
+
     print(f"Client IP: {ip}")
-    
+
     # レートリミットチェック
     if not check_rate_limit(ip):
-        return {"success": False, "message": "Too many requests. Please try again later."}
+        return {
+            'statusCode': 429,
+            'headers': _cors_headers(),
+            'body': json.dumps({'success': False, 'message': 'Too many requests. Please try again later.'}),
+        }
 
-    # AppSync Lambda Resolver format
-    args = event.get('arguments', {})
+    # API Gateway Lambda Proxy format
+    try:
+        args = json.loads(event.get('body') or '{}')
+    except (json.JSONDecodeError, TypeError):
+        return {
+            'statusCode': 400,
+            'headers': _cors_headers(),
+            'body': json.dumps({'success': False, 'message': 'Invalid JSON body'}),
+        }
+
     name = args.get('name')
     email = args.get('email')
     message = args.get('message')
 
     if not all([name, email, message]):
-        return {"success": False, "message": "Missing required fields"}
+        return {
+            'statusCode': 400,
+            'headers': _cors_headers(),
+            'body': json.dumps({'success': False, 'message': 'Missing required fields'}),
+        }
+
+    save_contact_submission(name, email, message, ip)
 
     sender_email = os.environ['SENDER_EMAIL']
     receiver_email = os.environ['RECEIVER_EMAIL']
@@ -91,7 +153,15 @@ def lambda_handler(event, context):
         with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
             server.login(sender_email, password)
             server.sendmail(sender_email, receiver_email, msg.as_string())
-        return {"success": True, "message": "Email sent successfully"}
+        return {
+            'statusCode': 200,
+            'headers': _cors_headers(),
+            'body': json.dumps({'success': True, 'message': 'Email sent successfully'}),
+        }
     except Exception as e:
         print(f"Error: {e}")
-        return {"success": False, "message": "Failed to send email"}
+        return {
+            'statusCode': 500,
+            'headers': _cors_headers(),
+            'body': json.dumps({'success': False, 'message': 'Failed to send email'}),
+        }

@@ -1,12 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { client } from "@/lib/amplify";
 import { SiteConfig } from "@/types";
-
-interface UpdateSiteConfigVariables {
-  id: string;
-  defaultPageId?: string;
-  menuOrder?: string[];
-}
+import {
+  getSiteConfig,
+  updateSiteConfig as updateSiteConfigApi,
+} from "@/api/siteConfig";
 
 export const useSiteSettings = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -16,38 +13,16 @@ export const useSiteSettings = () => {
   // サイト設定を更新する（内部用）
   const updateSiteConfigInternal = useCallback(
     async (id: string, newDefaultPageId?: string, newMenuOrder?: string[]) => {
-      const variables: UpdateSiteConfigVariables = { id };
-
+      const updated = await updateSiteConfigApi(
+        id,
+        newDefaultPageId,
+        newMenuOrder,
+      );
+      setSiteConfig(updated);
       if (newDefaultPageId !== undefined) {
-        variables.defaultPageId = newDefaultPageId;
+        setDefaultPageId(newDefaultPageId);
       }
-
-      if (newMenuOrder !== undefined) {
-        variables.menuOrder = newMenuOrder;
-      }
-
-      const result = await client.graphql({
-        query: `
-          mutation UpdateSiteConfig($id: ID!, $defaultPageId: String, $menuOrder: [String]) {
-            updateSiteConfig(id: $id, defaultPageId: $defaultPageId, menuOrder: $menuOrder) {
-              id
-              defaultPageId
-              menuOrder
-            }
-          }
-        `,
-        variables,
-      });
-
-      if ("data" in result && result.data.updateSiteConfig) {
-        setSiteConfig(result.data.updateSiteConfig);
-
-        if (newDefaultPageId !== undefined) {
-          setDefaultPageId(newDefaultPageId);
-        }
-      }
-
-      return result;
+      return updated;
     },
     [],
   );
@@ -56,24 +31,10 @@ export const useSiteSettings = () => {
   const fetchSiteConfig = useCallback(async () => {
     setIsLoading(true);
     try {
-      const result = await client.graphql({
-        query: `
-          query GetSiteConfig {
-            getSiteConfig(id: "siteConfig") {
-              id
-              defaultPageId
-              menuOrder
-            }
-          }
-        `,
-      });
-
-      if ("data" in result && result.data.getSiteConfig) {
-        setSiteConfig(result.data.getSiteConfig);
-
-        if (result.data.getSiteConfig.defaultPageId) {
-          setDefaultPageId(result.data.getSiteConfig.defaultPageId);
-        }
+      const data = await getSiteConfig();
+      setSiteConfig(data);
+      if (data.defaultPageId) {
+        setDefaultPageId(data.defaultPageId);
       }
     } catch (error) {
       console.error("Error fetching site config:", error);

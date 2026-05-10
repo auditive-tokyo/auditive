@@ -2,5 +2,9 @@
     "sonarlint.connectedMode.project": {
         "connectionId": "auditive-tokyo",
         "projectKey": "auditive-tokyo_auditive"
-    }
+    },
+    "sonarlint.analysisExcludesStandalone": "**/cdk/.venv/**",
+    "python.analysis.exclude": [
+        "**/cdk/.venv/**"
+    ]
 }

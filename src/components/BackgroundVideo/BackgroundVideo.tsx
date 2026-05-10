@@ -30,7 +30,7 @@ const BackgroundVideo: React.FC = () => {
 
   // 全ての動画を同期再生
   useEffect(() => {
-    const videos = videoRefs.current.filter(Boolean) as HTMLVideoElement[];
+    const videos = videoRefs.current.filter((v): v is HTMLVideoElement => v !== null);
 
     videos.forEach((video) => {
       video.muted = true;

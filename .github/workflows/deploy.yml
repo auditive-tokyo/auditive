@@ -58,20 +58,20 @@ jobs:
             --parameters auditive-lambda:ReceiverEmail="$CONTACT_EMAIL" \
             --parameters auditive-lambda:ZohoAppPassword="$ZOHO_PASSWORD"
 
-      - name: Get AppSync outputs
+      - name: Get API GW outputs
         run: |
-          ENDPOINT=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" --output text)
-          IDENTITY_POOL_ID=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='IdentityPoolId'].OutputValue" --output text)
-          REGION=$(aws cloudformation describe-stacks --stack-name auditive-appsync --query "Stacks[0].Outputs[?OutputKey=='Region'].OutputValue" --output text)
-          echo "ENDPOINT=${ENDPOINT}" > appsync-outputs.env
-          echo "IDENTITY_POOL_ID=${IDENTITY_POOL_ID}" >> appsync-outputs.env
-          echo "REGION=${REGION}" >> appsync-outputs.env
+          API_URL=$(aws cloudformation describe-stacks --stack-name auditive-apigw --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" --output text)
+          USER_POOL_ID=$(aws cloudformation describe-stacks --stack-name auditive-apigw --query "Stacks[0].Outputs[?OutputKey=='UserPoolId'].OutputValue" --output text)
+          USER_POOL_CLIENT_ID=$(aws cloudformation describe-stacks --stack-name auditive-apigw --query "Stacks[0].Outputs[?OutputKey=='UserPoolClientId'].OutputValue" --output text)
+          echo "API_URL=${API_URL}" > apigw-outputs.env
+          echo "USER_POOL_ID=${USER_POOL_ID}" >> apigw-outputs.env
+          echo "USER_POOL_CLIENT_ID=${USER_POOL_CLIENT_ID}" >> apigw-outputs.env
 
-      - name: Upload AppSync outputs
+      - name: Upload API GW outputs
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: appsync-outputs
-          path: appsync-outputs.env
+          name: apigw-outputs
+          path: apigw-outputs.env
           retention-days: 1
 
   # Frontend Deploy
@@ -90,19 +90,20 @@ jobs:
       - name: Download environment file
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
         with:
-          name: appsync-outputs
+          name: apigw-outputs
 
       - name: Load environment variables
-        run: cat appsync-outputs.env >> $GITHUB_ENV
+        run: cat apigw-outputs.env >> $GITHUB_ENV
 
       - name: Install dependencies
         run: npm ci # --ignore-scripts is intentionally omitted: postinstall scripts are required by esbuild (used internally by Vite)
 
       - name: Build
         env:
-          VITE_APPSYNC_API_ENDPOINT: ${{ env.ENDPOINT }}
-          VITE_COGNITO_IDENTITY_POOL_ID: ${{ env.IDENTITY_POOL_ID }}
-          VITE_AWS_REGION: ${{ env.REGION }}
+          VITE_API_BASE_URL: ${{ env.API_URL }}
+          VITE_COGNITO_USER_POOL_ID: ${{ env.USER_POOL_ID }}
+          VITE_COGNITO_USER_POOL_CLIENT_ID: ${{ env.USER_POOL_CLIENT_ID }}
+          VITE_AWS_REGION: ${{ secrets.AWS_REGION }}
           VITE_ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: npm run build
 

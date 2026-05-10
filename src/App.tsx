@@ -2,52 +2,74 @@ import React, { useState, useEffect } from "react";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import MainContent from "./components/MainContent";
-import { Menu } from "./components/Menu/Menu";
-import { AuthProvider } from "./auth/AuthContext";
+import { Menu, VALID_MENU_OPTIONS } from "./components/Menu/Menu";
+import { AuthProvider, useAuth } from "./auth/AuthContext";
 import PrivateRoute from "./auth/PrivateRoute";
 import Login from "./components/Content/Login/Login";
 import CyberCursor from "./components/CyberCursor/CyberCursor";
 import { useSiteSettings } from "./hooks/useSiteSettings";
+import { getAllContents } from "./api/public";
 
 const SECRET_LOGIN_HASH = "#fxxking-login";
 
-const App: React.FC = () => {
-  // DBからデフォルトページIDを取得
+const STATIC_MENUS = new Set(VALID_MENU_OPTIONS.filter((m) => m !== "login"));
+
+const AppContent: React.FC = () => {
+  const { isAuthenticated, isAuthLoading } = useAuth();
   const { defaultPageId, isLoading } = useSiteSettings();
-  // selectedMenu: ユーザーが選択したメニュー（null = まだ選択していない）
   const [selectedMenu, setSelectedMenu] = useState<string | null>(null);
-  // シークレットログインハッシュを検知
   const [showSecretLogin, setShowSecretLogin] = useState(false);
+  // 非認証かつdynamic IDの場合のみ、公開一覧で検証した結果を保持
+  const [asyncValidatedId, setAsyncValidatedId] = useState<string | null>(null);
 
   // ハッシュ変更を監視
   useEffect(() => {
     const checkHash = () => {
       if (globalThis.location.hash === SECRET_LOGIN_HASH) {
         setShowSecretLogin(true);
-        // ハッシュをクリア（URLに残さない）
         globalThis.history.replaceState(null, "", globalThis.location.pathname);
       }
     };
-
-    // 初期チェック
     checkHash();
-
-    // ハッシュ変更を監視
     globalThis.addEventListener("hashchange", checkHash);
     return () => globalThis.removeEventListener("hashchange", checkHash);
   }, []);
 
-  // 表示するメニュー: 選択済みならそれ、なければデフォルトページ
-  const activeMenu: string = selectedMenu ?? defaultPageId ?? "";
+  // 非認証かつdynamic IDの場合のみ公開一覧を取得して検証（非同期のみ）
+  useEffect(() => {
+    if (isAuthLoading || !defaultPageId) return;
+    if (isAuthenticated || STATIC_MENUS.has(defaultPageId)) return;
+
+    getAllContents()
+      .then((contents) => {
+        const publishedIds = new Set(contents.map((c) => c.id));
+        setAsyncValidatedId(
+          publishedIds.has(defaultPageId) ? defaultPageId : "contact",
+        );
+      })
+      .catch(() => setAsyncValidatedId("contact"));
+  }, [defaultPageId, isAuthenticated, isAuthLoading]);
+
+  // defaultPageIdの検証（同期ケースはレンダー時に直接計算）
+  const validatedDefaultPageId = (() => {
+    if (isAuthLoading || !defaultPageId) return null;
+    if (isAuthenticated) return defaultPageId;
+    if (STATIC_MENUS.has(defaultPageId)) return defaultPageId;
+    return asyncValidatedId; // 非同期検証完了まではnull（ローディング表示）
+  })();
+
+  const activeMenu: string = selectedMenu ?? validatedDefaultPageId ?? "";
 
   const handleMenuClick = (menu: string) => {
     setSelectedMenu(menu);
-    // メニューをクリックしたらシークレットログインを閉じる
     setShowSecretLogin(false);
   };
 
-  // ロード中は何も表示しない、またはローディングインジケーターを表示
-  if (isLoading && !activeMenu) {
+  const handleContentNotFound = () => {
+    setSelectedMenu("contact");
+  };
+
+  if ((isLoading || isAuthLoading) && !activeMenu) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black/70">
         <div className="text-white text-xl">Loading...</div>
@@ -55,7 +77,6 @@ const App: React.FC = () => {
     );
   }
 
-  // メインコンテンツをレンダリング
   const renderContent = () => {
     if (showSecretLogin) {
       return <Login onLoginSuccess={() => setShowSecretLogin(false)} />;
@@ -63,24 +84,36 @@ const App: React.FC = () => {
     if (activeMenu === "create") {
       return (
         <PrivateRoute>
-          <MainContent activeMenu={activeMenu} />
+          <MainContent
+            activeMenu={activeMenu}
+            onContentNotFound={handleContentNotFound}
+          />
         </PrivateRoute>
       );
     }
-    return <MainContent activeMenu={activeMenu} />;
+    return (
+      <MainContent
+        activeMenu={activeMenu}
+        onContentNotFound={handleContentNotFound}
+      />
+    );
   };
 
   return (
-    <AuthProvider>
-      <div className="app-layout">
-        <CyberCursor />
-        <Header />
-        <Menu activeMenu={activeMenu} onMenuClick={handleMenuClick} />
-        {renderContent()}
-        <Footer />
-      </div>
-    </AuthProvider>
+    <div className="app-layout">
+      <CyberCursor />
+      <Header />
+      <Menu activeMenu={activeMenu} onMenuClick={handleMenuClick} />
+      {renderContent()}
+      <Footer />
+    </div>
   );
 };
+
+const App: React.FC = () => (
+  <AuthProvider>
+    <AppContent />
+  </AuthProvider>
+);
 
 export default App;

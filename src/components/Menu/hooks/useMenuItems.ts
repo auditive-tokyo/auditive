@@ -1,5 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import { contentsApi } from "@/api/Content";
+import {
+  createContent,
+  updateContent,
+  deleteContent,
+  getAdminContent,
+  getAdminContents,
+} from "@/api/Content";
+import { getAllContents } from "@/api/public";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { MenuItem } from "../types";
 
@@ -26,15 +33,8 @@ const parseParentMenuContent = (
   }
 };
 
-export const useMenuItems = (isAuthenticated: boolean) => {
+export const useMenuItems = (isAuthenticated: boolean, isAuthLoading: boolean = false) => {
   const [dynamicPages, setDynamicPages] = useState<MenuItem[]>([]);
-  const {
-    getAllContents,
-    deleteContent,
-    createContent,
-    getContent,
-    updateContent,
-  } = contentsApi();
 
   // サイト設定フックを使用
   const {
@@ -61,9 +61,13 @@ export const useMenuItems = (isAuthenticated: boolean) => {
 
   // Fetch dynamic pages
   useEffect(() => {
+    if (isAuthLoading) return; // auth初期化完了まで待つ
+
     const fetchPages = async () => {
       try {
-        const contents = await getAllContents();
+        const contents = isAuthenticated
+          ? await getAdminContents()
+          : await getAllContents();
 
         const dynamicMenuPages = await Promise.all(
           contents
@@ -109,7 +113,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
     };
 
     fetchPages();
-  }, [getAllContents, isAuthenticated, getContent]);
+  }, [isAuthenticated, isAuthLoading]);
 
   // Memoize filtered arrays
   const publishedPages = useMemo(
@@ -277,7 +281,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
       const updatedChildren = [...children, childId];
 
       // 親メニューのコンテンツを取得して更新
-      const parentContent = await getContent(parentId);
+      const parentContent = await getAdminContent(parentId);
       const parentData = parseParentMenuContent(parentContent.content);
       parentData.children = updatedChildren;
 
@@ -324,7 +328,7 @@ export const useMenuItems = (isAuthenticated: boolean) => {
       );
 
       // 親メニューのコンテンツを取得して更新
-      const parentContent = await getContent(parentId);
+      const parentContent = await getAdminContent(parentId);
       const parentData = parseParentMenuContent(parentContent.content);
       parentData.children = updatedChildren;
 

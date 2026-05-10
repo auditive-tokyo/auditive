@@ -1,50 +1,65 @@
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
+import { signIn, signOut, getCurrentUser } from "aws-amplify/auth";
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (apiKey: string) => Promise<boolean>;
+  isAuthLoading: boolean;
+  login: (password: string) => Promise<boolean>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // 初期値をlocalStorageから直接取得
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
-    () => localStorage.getItem('auth_token') !== null
-  );
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
 
-  const login = useCallback(async (password: string) => {
-    if (password === import.meta.env.VITE_ADMIN_PASSWORD) {
-      localStorage.setItem('auth_token', 'authenticated');
+  // セッションを確認して認証状態を初期化
+  useEffect(() => {
+    getCurrentUser()
+      .then(() => setIsAuthenticated(true))
+      .catch(() => setIsAuthenticated(false))
+      .finally(() => setIsAuthLoading(false));
+  }, []);
+
+  const login = useCallback(async (password: string): Promise<boolean> => {
+    try {
+      await signIn({ username: "admin", password });
       setIsAuthenticated(true);
       return true;
+    } catch {
+      return false;
     }
-    return false;
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('auth_token');
-    setIsAuthenticated(false);
+    signOut()
+      .then(() => setIsAuthenticated(false))
+      .catch(console.error);
   }, []);
 
   const value = useMemo(
-    () => ({ isAuthenticated, login, logout }),
-    [isAuthenticated, login, logout]
+    () => ({ isAuthenticated, isAuthLoading, login, logout }),
+    [isAuthenticated, isAuthLoading, login, logout],
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
