@@ -17,18 +17,20 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 
+ALLOW_ORIGIN_HEADER = "method.response.header.Access-Control-Allow-Origin"
+
 METHOD_RESPONSES = [
     apigw.MethodResponse(
         status_code="200",
         response_parameters={
-            "method.response.header.Access-Control-Allow-Origin": True,
+            ALLOW_ORIGIN_HEADER: True,
             "method.response.header.Content-Type": True,
         },
     ),
     apigw.MethodResponse(
         status_code="404",
         response_parameters={
-            "method.response.header.Access-Control-Allow-Origin": True,
+            ALLOW_ORIGIN_HEADER: True,
         },
     ),
 ]
@@ -147,7 +149,7 @@ class ApiGwStack(Stack):
                         apigw.IntegrationResponse(
                             status_code="200",
                             response_parameters={
-                                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                                ALLOW_ORIGIN_HEADER: "'*'",
                                 "method.response.header.Content-Type": "integration.response.header.Content-Type",
                             },
                         ),
@@ -155,7 +157,7 @@ class ApiGwStack(Stack):
                             status_code="404",
                             selection_pattern="404",
                             response_parameters={
-                                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                                ALLOW_ORIGIN_HEADER: "'*'",
                             },
                         ),
                     ],
