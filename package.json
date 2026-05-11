@@ -7,7 +7,6 @@
   "dependencies": {
     "@fontsource/outfit": "^5.2.8",
     "@hello-pangea/dnd": "^18.0.1",
-    "@monaco-editor/react": "^4.7.0",
     "@react-spring/web": "^10.0.3",
     "@tailwindcss/typography": "^0.5.16",
     "aws-amplify": "^6.13.1",
