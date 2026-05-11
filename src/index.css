@@ -27,7 +27,7 @@
 
 /* proseクラス内のスタイルを上書き */
 .prose {
-  @apply font-sans text-lg text-white;
+  @apply font-sans text-lg text-white text-left;
 }
 
 .prose p {

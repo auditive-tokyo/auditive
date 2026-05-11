@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
@@ -6,6 +6,7 @@ import { getAdminContent } from "@/api/Content";
 import { getContent as getPublicContent } from "@/api/public";
 import { Content } from "@/types";
 import { useAuth } from "@/auth/AuthContext";
+import { markdownComponents } from "../shared/markdownComponents";
 import EditContent from "../EditContent/EditContent"; // 新しく作成する編集用コンポーネント
 
 interface ShowContentProps {
@@ -17,7 +18,11 @@ const ShowContent: React.FC<ShowContentProps> = ({ id, onNotFound }) => {
   const [content, setContent] = useState<Content | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false); // 編集モードの状態管理
-  const { isAuthenticated, isAuthLoading } = useAuth(); // 認証状態を取得
+  const { isAuthenticated, isAuthLoading } = useAuth();
+  const onNotFoundRef = useRef(onNotFound);
+  useEffect(() => {
+    onNotFoundRef.current = onNotFound;
+  }, [onNotFound]);
 
   useEffect(() => {
     if (isAuthLoading) return; // auth初期化完了まで待つ
@@ -31,9 +36,13 @@ const ShowContent: React.FC<ShowContentProps> = ({ id, onNotFound }) => {
           : await getPublicContent(id);
         setContent(data);
       } catch (error) {
-        if (!isAuthenticated && error instanceof Error && error.message.includes('404')) {
+        if (
+          !isAuthenticated &&
+          error instanceof Error &&
+          error.message.includes("404")
+        ) {
           // DRAFT content is not publicly available - fall back silently
-          onNotFound?.();
+          onNotFoundRef.current?.();
         } else {
           console.error("Error fetching content:", error);
         }
@@ -93,7 +102,11 @@ const ShowContent: React.FC<ShowContentProps> = ({ id, onNotFound }) => {
       </div>
 
       <div className="prose prose-invert max-w-none">
-        <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
+        <ReactMarkdown
+          rehypePlugins={[rehypeRaw]}
+          remarkPlugins={[remarkGfm]}
+          components={markdownComponents}
+        >
           {content.content}
         </ReactMarkdown>
       </div>
