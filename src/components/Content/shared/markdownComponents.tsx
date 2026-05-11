@@ -1,4 +1,5 @@
 import React from "react";
+import MermaidBlock from "./MermaidBlock";
 
 // ReactMarkdown用の共通コンポーネント定義
 export const markdownComponents = {
@@ -15,6 +16,24 @@ export const markdownComponents = {
       return <div dangerouslySetInnerHTML={{ __html: children }} />;
     }
     return <p>{children}</p>;
+  },
+
+  // <pre>レベルでmermaidをインターセプト → <pre>ラッパーなしで直接MermaidBlockを返す
+  pre: ({ children }: { children?: React.ReactNode }) => {
+    const child = React.Children.toArray(children)[0];
+    if (React.isValidElement(child)) {
+      const { className, children: code } = child.props as {
+        className?: string;
+        children?: unknown;
+      };
+      if (className === "language-mermaid") {
+        const chart = Array.isArray(code)
+          ? (code as unknown[]).join("")
+          : String(code ?? "");
+        if (chart.trim()) return <MermaidBlock chart={chart} />;
+      }
+    }
+    return <pre>{children}</pre>;
   },
 };
 
