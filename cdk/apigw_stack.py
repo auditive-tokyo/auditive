@@ -78,6 +78,8 @@ class ApiGwStack(Stack):
             bucket_name="auditive-content-md",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy=RemovalPolicy.RETAIN,
+            versioned=False,  # NOSONAR - versioning not needed; content is managed via DynamoDB + S3 write-through
+            enforce_ssl=True,
             cors=[
                 s3.CorsRule(
                     allowed_methods=[s3.HttpMethods.GET],

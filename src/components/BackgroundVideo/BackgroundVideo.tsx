@@ -123,7 +123,7 @@ const BackgroundVideo: React.FC = () => {
               width={VIDEO_WIDTH}
               height={VIDEO_HEIGHT}
               className="block"
-              style={getMaskStyle(index) as React.CSSProperties}
+              style={getMaskStyle(index)}
             >
               <source src={videoSrc} type="video/mp4" />
             </video>
