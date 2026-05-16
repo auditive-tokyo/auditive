@@ -72,7 +72,9 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev',
+    // CI: pre-built assets via vite preview (avoids slow on-demand compilation)
+    // Local: dev server with HMR
+    command: process.env.CI ? 'npm run preview -- --port 5173' : 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
   },
