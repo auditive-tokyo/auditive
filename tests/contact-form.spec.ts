@@ -25,9 +25,10 @@ test("contact form shows success message on submit", async ({ page }) => {
 });
 
 test("contact form shows error message on API failure", async ({ page }) => {
-  // ネットワークエラーをシミュレート（Chromiumでのroute.fulfill 500の挙動差異を回避）
+  // ネットワークエラーをシミュレート
+  // "failed"はCIのChromiumで内部リトライが発生するため"connectionrefused"を使用
   await page.route("**/contact", (route) => {
-    route.abort("failed");
+    route.abort("connectionrefused");
   });
 
   await page.goto("/");
