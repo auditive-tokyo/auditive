@@ -20,16 +20,18 @@ src/
 
 ### 主なボトルネック
 
-- JSバンドルが単一ファイル 813KB（gzip: 252KB）
+- JSバンドルが単一ファイル（vite v8移行後: 1,410KB / gzip: 393KB）
 - 未使用JS削減余地 204 KiB、JS実行時間 2.6s、3 long tasks
+- `mermaid` が重い（mermaid-parser: 603KB、cytoscape: 434KB）—Mermaidはサイトの主要機能のため削除不可
 
 ### 対応候補
 
 | 施策 | 効果 | 実装コスト | ステータス |
 |--|--|--|--|
 | `@monaco-editor/react` 削除（未使用だった） | 小 | 済 | ✅ 完了 |
-| `manualChunks` でライブラリを別チャンクに分割 | 中（並列取得・キャッシュ効率化） | 低 | 未着手 |
+| `mermaid` を `React.lazy` で遅延ロード | **大**（初期バンドルから600KB+削減） | 低 | 未着手 |
 | Admin系コンポーネントを `React.lazy` で遅延ロード | 大（初期バンドル削減） | 中 | 未着手 |
+| `manualChunks` でライブラリを別チャンクに分割 | 中（並列取得・キャッシュ効率化） | 低 | 未着手 |
 | S3レスポンスに `Cache-Control: max-age` を付与 | 中（再訪問時） | 低 | 未着手 |
 
 ### メモ
