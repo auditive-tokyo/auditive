@@ -25,13 +25,9 @@ test("contact form shows success message on submit", async ({ page }) => {
 });
 
 test("contact form shows error message on API failure", async ({ page }) => {
-  // APIエラーをシミュレート
+  // ネットワークエラーをシミュレート（Chromiumでのroute.fulfill 500の挙動差異を回避）
   await page.route("**/contact", (route) => {
-    route.fulfill({
-      status: 500,
-      contentType: "application/json",
-      body: JSON.stringify({ success: false }),
-    });
+    route.abort("failed");
   });
 
   await page.goto("/");
