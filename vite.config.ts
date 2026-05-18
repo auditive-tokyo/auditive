@@ -24,4 +24,18 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/aws-amplify') || id.includes('node_modules/@aws-amplify')) {
+            return 'vendor-amplify';
+          }
+          if (id.includes('node_modules/react-dom')) {
+            return 'vendor-react';
+          }
+        },
+      },
+    },
+  },
 })

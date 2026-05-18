@@ -1,5 +1,7 @@
-import React from "react";
-import MermaidBlock from "./MermaidBlock";
+import React, { Suspense, lazy } from "react";
+
+// mermaid(600KB+)を初期バンドルから除外して遅延ロード
+const MermaidBlock = lazy(() => import("./MermaidBlock"));
 
 // ReactMarkdown用の共通コンポーネント定義
 export const markdownComponents = {
@@ -30,7 +32,12 @@ export const markdownComponents = {
         const chart = Array.isArray(code)
           ? (code as unknown[]).join("")
           : String(code ?? "");
-        if (chart.trim()) return <MermaidBlock chart={chart} />;
+        if (chart.trim())
+          return (
+            <Suspense fallback={<div />}>
+              <MermaidBlock chart={chart} />
+            </Suspense>
+          );
       }
     }
     return <pre>{children}</pre>;

@@ -25,6 +25,7 @@ METHOD_RESPONSES = [
         response_parameters={
             ALLOW_ORIGIN_HEADER: True,
             "method.response.header.Content-Type": True,
+            "method.response.header.Cache-Control": True,
         },
     ),
     apigw.MethodResponse(
@@ -153,6 +154,7 @@ class ApiGwStack(Stack):
                             response_parameters={
                                 ALLOW_ORIGIN_HEADER: "'*'",
                                 "method.response.header.Content-Type": "integration.response.header.Content-Type",
+                                "method.response.header.Cache-Control": "'public, max-age=300'",
                             },
                         ),
                         apigw.IntegrationResponse(

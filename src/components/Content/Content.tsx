@@ -1,7 +1,7 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import Contact from "./Contact/Contact";
-import CreateContent from "./CreateContent/CreateContent";
-import ShowContent from "./ShowContent/ShowContent";
+const CreateContent = lazy(() => import("./CreateContent/CreateContent"));
+const ShowContent = lazy(() => import("./ShowContent/ShowContent"));
 import { VALID_MENU_OPTIONS } from "../Menu/Menu";
 
 interface ContentProps {
@@ -34,7 +34,11 @@ const Content: React.FC<ContentProps> = ({ activeMenu, onContentNotFound }) => {
 
   return (
     <div className="content-container">
-      <div className="content-wrapper">{renderContent()}</div>
+      <div className="content-wrapper">
+        <Suspense fallback={<div>Loading...</div>}>
+          {renderContent()}
+        </Suspense>
+      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense, lazy } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
@@ -7,7 +7,7 @@ import { getContent as getPublicContent } from "@/api/public";
 import { Content } from "@/types";
 import { useAuth } from "@/auth/AuthContext";
 import { markdownComponents } from "../shared/markdownComponents";
-import EditContent from "../EditContent/EditContent"; // 新しく作成する編集用コンポーネント
+const EditContent = lazy(() => import("../EditContent/EditContent"));
 
 interface ShowContentProps {
   id: string;
@@ -76,11 +76,13 @@ const ShowContent: React.FC<ShowContentProps> = ({ id, onNotFound }) => {
   // 編集モードの場合は編集フォームを表示
   if (isEditing) {
     return (
-      <EditContent
-        content={content}
-        onComplete={handleEditComplete}
-        onCancel={() => setIsEditing(false)}
-      />
+      <Suspense fallback={<div>Loading...</div>}>
+        <EditContent
+          content={content}
+          onComplete={handleEditComplete}
+          onCancel={() => setIsEditing(false)}
+        />
+      </Suspense>
     );
   }
 
