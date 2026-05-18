@@ -25,6 +25,7 @@ METHOD_RESPONSES = [
         response_parameters={
             ALLOW_ORIGIN_HEADER: True,
             "method.response.header.Content-Type": True,
+            "method.response.header.Cache-Control": True,
         },
     ),
     apigw.MethodResponse(
@@ -78,6 +79,8 @@ class ApiGwStack(Stack):
             bucket_name="auditive-content-md",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy=RemovalPolicy.RETAIN,
+            versioned=False,  # NOSONAR - versioning not needed; content is managed via DynamoDB + S3 write-through
+            enforce_ssl=True,
             cors=[
                 s3.CorsRule(
                     allowed_methods=[s3.HttpMethods.GET],
@@ -151,6 +154,7 @@ class ApiGwStack(Stack):
                             response_parameters={
                                 ALLOW_ORIGIN_HEADER: "'*'",
                                 "method.response.header.Content-Type": "integration.response.header.Content-Type",
+                                "method.response.header.Cache-Control": "'public, max-age=300'",
                             },
                         ),
                         apigw.IntegrationResponse(
